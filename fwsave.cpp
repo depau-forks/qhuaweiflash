@@ -1,5 +1,5 @@
 // 
-//  Сохранение файла прошивки на диск
+//  Save firmware file to disk
 // 
 #include <QtWidgets>
 
@@ -15,7 +15,7 @@
 extern QString fwfilename;
   
 //****************************************************************
-//* Процедура сохранения образа прошивки в новом файле
+//* Procedure to save firmware image to new file
 //****************************************************************
 void fw_saver(bool newname, bool zflag) {
 
@@ -27,10 +27,10 @@ char fname[200];
 int dlcode;
 
 if (newname || fwfilename.isEmpty())  { 
-  // выбираем новое имя файла
+  // select new file name
   QString fn=fwfilename;
 
-  fn=QFileDialog::getSaveFileName(0,"Имя файла",fn,"firmware (*.fw);;All files (*.*)");
+  fn=QFileDialog::getSaveFileName(0,"File name",fn,"firmware (*.fw);;All files (*.*)");
   if (fn.isEmpty()) return;
   fwfilename=fn;  
 }
@@ -41,22 +41,22 @@ dlcode=dload_id&7;
 
 out=fopen(fname,"w");
 if (out == 0) {
-    QMessageBox::critical(0,"Ошибка","Ошибка создания файла");
+    QMessageBox::critical(0,"Error","Error creating file");
     return;
 }
 
-// записываем заголовок - upgrade state
+// write header - upgrade state
 bzero(hdr,sizeof(hdr));
-// выделяем код типа прошивки
+// extract firmware type code
 hdr[0]=dlcode;
 if (signlen != -1) hdr[0]|=0x8;
 fwrite(hdr,1,sizeof(hdr),out);
 
-// Формируем окно прогресс-бара
+// Create progress bar window
 QWidget* pb=new QWidget();
 QVBoxLayout* plm=new QVBoxLayout(pb);
 
-QLabel* lb = new QLabel("Сохранение разделов",pb);
+QLabel* lb = new QLabel("Saving partitions",pb);
 QFont font;
 font.setPointSize(14);
 font.setBold(true);
@@ -70,7 +70,7 @@ plm->addWidget(fbar);
 
 pb->show();
 
-// записываем образы всех разделов
+// write images of all partitions
 for(i=0;i<ptable->index();i++) {
   ptable->save_part(i,out,zflag);
   percent=(i+1)*100/(ptable->index());
