@@ -1,6 +1,6 @@
 #include <QtWidgets>
 
-// Процедуры обработки цифровых подписей
+// Digital signature processing procedures
 // 
 #include <stdio.h>
 #include <stdint.h>
@@ -25,19 +25,19 @@
 #define signbaselen 6
 
 
-// результирующая строка ^signver-команды
+// resulting ^signver command string
 uint8_t signver[200];
 
-// Флаг типа прошивки
+// Firmware type flag
 extern int dflag;
 
-// Параметры текущей цифровой подписи
-uint32_t signtype; // тип прошивки
-int32_t signlen=-1;  // длина подписи
+// Current digital signature parameters
+uint32_t signtype; // firmware type
+int32_t signlen=-1;  // signature length
 
 int32_t serach_sign();
 
-// Хеш открытого ключа для ^signver
+// Public key hash for ^signver
 char signver_hash[100]="778A8D175E602B7B779D9E05C330B5279B0661BF2EED99A20445B366D63DD697";
 
 
@@ -45,12 +45,12 @@ char signver_hash[100]="778A8D175E602B7B779D9E05C330B5279B0661BF2EED99A20445B366
   
 
 //***************************************************
-//* Отправка цифровой подписи
+//* Send digital signature
 //***************************************************
 int32_t send_signver() {
   
 uint32_t res;
-// ответ на ^signver
+// ^signver response
 unsigned char SVrsp[]={0x0d, 0x0a, 0x30, 0x0d, 0x0a, 0x0d, 0x0a, 0x4f, 0x4b, 0x0d, 0x0a};
 uint8_t replybuf[200];
 char message[100];  
@@ -60,15 +60,15 @@ signtype=dload_id&0x7;
 sprintf((char*)signver,"^SIGNVER=%i,0,%s,%i",signtype,signver_hash,signlen);
 res=atcmd((char*)signver,replybuf);
 if ( (res<sizeof(SVrsp)) || (memcmp(replybuf,SVrsp,sizeof(SVrsp)) != 0) ) {
-   sprintf(message,"Ошибка проверки цифровой сигнатуры - %02x",replybuf[2]);
-   QMessageBox::critical(0,"Ошибка",message);
+   sprintf(message,"Digital signature verification error - %02x",replybuf[2]);
+   QMessageBox::critical(0,"Error",message);
    return -2;
 }
 return 1;
 }
 
 //***************************************************
-//* Поиск цифровой подписи в прошивке
+//* Search for digital signature in firmware
 //***************************************************
 int32_t search_sign() {
 
@@ -76,16 +76,16 @@ int i,j;
 uint32_t pt;
 uint8_t* imageptr;
 
-// поиск в разделах 0 и 1
+// search in partitions 0 and 1
 for (i=0;i<2;i++) {
   if (ptable->index() == i) break;
   imageptr=ptable->iptr(i)+ptable->psize(i);
   pt=*(uint32_t*)(imageptr-4);
   if (pt == 0xffaaaffa) { 
-    // подпись найдена
+    // signature found
     signlen=*(uint32_t*)(imageptr-12);
     bzero(signver_hash,100);
-    // выделяем хеш открытого ключа
+    // extract public key hash
 //     printf("\n psize = %08x",
     for(j=0;j<32;j++) {
      sprintf(signver_hash+2*j,"%02X",*(imageptr-signlen+6+j));
@@ -94,12 +94,12 @@ for (i=0;i<2;i++) {
     return signlen;
   }
 }
-// не найдена
+// not found
 return -1;
 }
  
 //********************************************
-//* Вывод информации о цифровой подписи
+//* Display digital signature information
 //********************************************
 void MainWindow::ShowSignInfo() {
 
@@ -112,14 +112,14 @@ QFormLayout* lm=new QFormLayout(sd);
 char str[200];
 
 QLabel* dlid=new QLabel(fw_description(dload_id));
-lm->addRow("Тип прошивки",dlid);
+lm->addRow("Firmware type",dlid);
 
 sprintf(str,"%i",signlen);
 QLabel* signln=new QLabel(str);
-lm->addRow("Размер подписи",signln);
+lm->addRow("Signature size",signln);
 
 QLabel* hash=new QLabel(signver_hash);
-lm->addRow("Хеш ключа",hash);
+lm->addRow("Key hash",hash);
 
 lm->addRow(0,btn);
 

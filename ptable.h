@@ -1,86 +1,86 @@
 #ifndef __PTABLE_H
 #define __PTABLE_H
 
-// структура описания заголовка раздела
+// partition header description structure
 struct __attribute__ ((__packed__)) pheader {
  uint32_t magic;    //   0xa55aaa55
- uint32_t hdsize;   // размер заголовка
- uint32_t hdversion; // вресия заголовка
- uint8_t unlock[8]; // платформа
- uint32_t code;     // тип раздела
- uint32_t psize;    // разме поля данных
+ uint32_t hdsize;   // header size
+ uint32_t hdversion; // header version
+ uint8_t unlock[8]; // platform
+ uint32_t code;     // partition type
+ uint32_t psize;    // data field size
  uint8_t date[16];
- uint8_t time[16];  // дата-время сборки прошивки
- uint8_t version[32];   // версия пршоивки
- uint16_t crc;   // CRC заголовка
- uint32_t blocksize;  // размер блока CRC образа прошивки
+ uint8_t time[16];  // firmware build date-time
+ uint8_t version[32];   // firmware version
+ uint16_t crc;   // header CRC
+ uint32_t blocksize;  // firmware image CRC block size
 }; 
 
-// Типы структуры разделов
+// Partition structure types
 enum parttypes {
-    part_bin, // неформатные двоичные разделы
-    part_cpio,   // разделы CPIO-формата
-    part_nvram,  // разделы nvdload
-    part_iso,    // образы CD
-    part_ptable, // таблицы разделов
+    part_bin, // unformatted binary partitions
+    part_cpio,   // CPIO format partitions
+    part_nvram,  // nvdload partitions
+    part_iso,    // CD images
+    part_ptable, // partition tables
     part_oem     // oeminfo 
 };    
 
-// Структура описания таблицы разделов
+// Partition table description structure
 
 struct ptb_t{
-  unsigned char pname[20];    // буквенное имя раздела
-  struct pheader hd;  // образ заголовка
-  uint16_t* csumblock; // блок контрольных сумм
-  uint8_t* pimage;   // образ раздела
-  uint32_t zflag;     // признак сжатого раздела  
-  enum parttypes ptype;     // тип раздела, согласно enum parttypes
+  unsigned char pname[20];    // partition text name
+  struct pheader hd;  // header image
+  uint16_t* csumblock; // checksum block
+  uint8_t* pimage;   // partition image
+  uint32_t zflag;     // compressed partition flag  
+  enum parttypes ptype;     // partition type, according to enum parttypes
 };
 
 //**********************************************************
-//*  Класс для работы с таблицей разделов
+//*  Class for working with partition table
 //**********************************************************
 
 class ptable_list {
-  // хранилище таблицы разделов
+  // partition table storage
   struct ptb_t table[120];
-  int npart; // число разделов в таблице
+  int npart; // number of partitions in table
   
 public:
-  // конструктор
+  // constructor
   ptable_list() { npart=0; }
-  // деструктор
+  // destructor
   ~ptable_list() {clear();}
-  // извлечение разделов из файла 
+  // extract partitions from file 
   void extract(FILE* in);  
-  // очистка всей таблицы
+  // clear entire table
   void clear();
-  // получение размера таблицы
+  // get table size
   int index() {return npart; }
-  // получение размера заголовка
+  // get header size
   uint32_t crcsize(int n) { return table[n].hd.hdsize-sizeof(pheader); }
-  // получение размера образа
+  // get image size
   uint32_t psize(int n) { return table[n].hd.psize; }
-  // получение кода раздела
+  // get partition code
   uint32_t code(int n) { return table[n].hd.code; }
-  // получение имени раздела
+  // get partition name
   uint8_t* name(int n) { return table[n].pname; }
-  // получение ссылки на заголовок
+  // get header reference
   struct pheader* hptr(int n) { return &table[n].hd; }
-  // получение ссылки на образ раздела
+  // get partition image reference
   uint8_t* iptr(int n) { return table[n].pimage; }
-  // получение типа раздела
+  // get partition type
   enum parttypes ptype(int n) { return table[n].ptype; }
-  // получаение сжатого размера
+  // get compressed size
   uint32_t zsize(int n) { return table[n].zflag; }
   
-  // получение ссылок на описательные поля заголовка
+  // get references to header descriptive fields
   uint8_t* platform(int n) { return table[n].hd.unlock; }
   uint8_t* date(int n) { return table[n].hd.date; }
   uint8_t* time(int n) { return table[n].hd.time; }
   uint8_t* version(int n) { return table[n].hd.version; }
 
-  // замена образа раздела
+  // replace partition image
   void replace(int n, uint8_t* data, uint32_t len);
   
   void findparts(FILE* in);
@@ -89,11 +89,11 @@ public:
   void calc_crc16(int n);
   void calc_hd_crc16(int n); 
 
-  // удаление раздела
+  // delete partition
   void delpart(int n);
-  // перемещение вверх
+  // move up
   void moveup(int n);
-  // перемещение вниз
+  // move down
   void movedown(int n);  
 };
     
@@ -104,7 +104,7 @@ char* fw_description(uint8_t code);
 
 void  find_pname(unsigned int id,unsigned char* pname);
 
-// тип прошивки
+// firmware type
 extern int dload_id;
 
 #endif

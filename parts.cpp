@@ -6,12 +6,12 @@
 #include <unistd.h>
 #include "parts.h"
 
-// сигнатура заголовка таблицы  
+// table header signature  
 const uint8_t headmagic[16]={0x70, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x48, 0x65, 0x61, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80};  
   
 
 //*********************************************************
-//* Проверка раздела - является ли он таблицей разделов?
+//* Check partition - is it a partition table?
 //*********************************************************
 int is_ptable(void* ptimage) {
 
@@ -22,7 +22,7 @@ else return 0;
 
 
 //*********************************************
-//* Формирование таблицы mtd-разделов
+//* Create mtd partition table
 //*********************************************
 void parts_fill(QTableWidget* ptedit,void* ptimage) {
 
@@ -36,7 +36,7 @@ for(pnum=0;
    (strcmp(pt->part[pnum].name,"T") != 0);
    pnum++) {
    
-   // добавлякм строку
+   // add row
    ptedit->setRowCount(pnum+1);
    item=new QTableWidgetItem(pt->part[pnum].name);
    item->setFlags(Qt::ItemIsEditable);

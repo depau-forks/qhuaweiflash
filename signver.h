@@ -1,10 +1,10 @@
 int32_t send_signver();
 int32_t search_sign();
 
-// Параметры текущей цифровой подписи
+// Current digital signature parameters
 
-extern int32_t signlen;  // длина подписи
-// Хеш открытого ключа для ^signver
+extern int32_t signlen;  // signature length
+// Public key hash for ^signver
 extern char signver_hash[100];
 
 

@@ -1,16 +1,16 @@
 # qhuaweiflash
-Графическая утилита для прошивки модемов и роутеров фирмы HUAWEI и редактирования файлов прошивок
+Graphical utility for flashing HUAWEI modems and routers and editing firmware files
 
-Данная утилита предназначена для:
+This utility is designed for:
 
-- Прошивки модемов фирмы huawei, поддерживающих протокол прошивки, аналогичный применяемому в модемах на Balong V7. В том числе реализована полноценная работа с цифровыми подписями прошивок.
-- Редактирования образов прошивок. Возможен просмотр, добавление, удаление, изменение отдельных разделов, изменение заголовков разделов. 
-Реализовано редактирование образов разделов в HEX-коде и, частитчно, в форматном режиме (если раздел имеет какой-либо осмысленный формат).
-- Загрузки в модем загрузчиков usbloader с применением патчей.
+- Flashing HUAWEI modems that support a flashing protocol similar to that used in Balong V7 modems. Full support for digital signatures of firmwares is implemented.
+- Editing firmware images. It is possible to view, add, delete, modify individual partitions, and change partition headers. 
+Editing partition images in HEX-code and, partially, in formatted mode (if the partition has some meaningful format) is implemented.
+- Loading usbloader bootloaders into the modem with patches applied.
 
-Утилита построена на графическом пакете Qt, и является оконным вариантом утилит balong_flash, balong-usbload, и также редактором прошивок.
+The utility is built on the Qt graphics package, and is a GUI version of the balong_flash, balong-usbload utilities, and also a firmware editor.
 
-Для сборки ктилиты используйте команды:
+To build the utility use the commands:
 
 qmake
 
