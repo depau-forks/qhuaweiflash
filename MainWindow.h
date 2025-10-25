@@ -7,28 +7,28 @@
 
 
 //******************************************************************************
-//* Класс главного окна
+//* Main window class
 //******************************************************************************
 class MainWindow: public QMainWindow {
   
 Q_OBJECT
 
-QTableWidget* ptedit=0; // редактор таблицы разделов 
-QLineEdit* oemedit=0;   // редактор oeminfo-разделов
+QTableWidget* ptedit=0; // partition table editor 
+QLineEdit* oemedit=0;   // oeminfo partition editor
 QLabel* label=0;
-QSpacerItem* spacer=0; // подпорка под короткие формы редакторов
+QSpacerItem* spacer=0; // spacer for short editor forms
 hexeditor* hexedit=0;
-kerneledit* kedit=0;  // редактор разделов kernel
-nvdedit* nvedit=0;  // редактор разделов kernel
-cpioedit* cpio=0;   // редактор файловых разделов
+kerneledit* kedit=0;  // kernel partition editor
+nvdedit* nvedit=0;  // nvram partition editor
+cpioedit* cpio=0;   // filesystem partition editor
 
 bool modified=false;
 
-// Хранилище настроек
+// Settings storage
 QSettings* config;
 
-int hrow=-1;   // строка списка разделов, соответствующая текущему заголовку
-int structure_mode_save=-1; // предыдущее состояние переключателя дамп-формат
+int hrow=-1;   // partition list row corresponding to the current header
+int structure_mode_save=-1; // previous state of the dump-format toggle
 
 enum parttypes partmode=part_bin;
 
@@ -37,13 +37,13 @@ public:
 MainWindow(QString startfile);
 virtual ~MainWindow(); 
 
-// Базовый виджет - вертикальный сплиттер
+// Base widget - vertical splitter
 QSplitter *centralwidget;
 
-// Иконка главного окна
+// Main window icon
 QIcon icon;
 
-// Обработчики меню
+// Menu handlers
 QAction *fileopen;
 QAction *fileappend;
 QAction *part_store;
@@ -60,15 +60,15 @@ QAction *Menu_Oper_USBDload;
 QAction *Menu_Oper_Reboot;
 QAction *Menu_Oper_signinfo;
 
-// Элементы интерфейса
+// Interface elements
 
-// Элементы редактора заголовка
-QWidget* hdrpanel; // корневой виджет
-QVBoxLayout* vlhdr; // основной вертикальный компоновщик
+// Header editor elements
+QWidget* hdrpanel; // root widget
+QVBoxLayout* vlhdr; // main vertical layout
 QLabel* hdlbl1;
-QListWidget *partlist; // список разделов
+QListWidget *partlist; // partition list
 QLabel* hdlbl2;
-QFormLayout* lphdr;    // редакторы полей заголовка
+QFormLayout* lphdr;    // header field editors
 QLineEdit *Date_input;
 QLineEdit *Time_input;
 QToolButton *setdate;
@@ -79,28 +79,28 @@ QLineEdit *pcode;
 QLabel* hdlbl3;
 QLineEdit *Platform_input;
 
-// Элементы редактора раздела
+// Partition editor elements
 QWidget* edpanel;
 QVBoxLayout* EditorLayout;
 
-// Кнопки сырой-форматный
+// Raw-formatted buttons
 QBoxLayout* laymode;
 QGroupBox *modebuttons;
 QRadioButton *dump_mode;
 QRadioButton *structure_mode;
 
-// линия-разделитель
+// separator line
 QFrame* hframe;
 
-// Главное меню
+// Main menu
 QMenuBar *menubar;
 QMenu *menu_file;
 QMenu *menu_oper;
 QMenu *menu_part;
 
-// Статусбар
+// Status bar
 QStatusBar* statusbar;
-// Выбор порта
+// Port selection
 QLabel* plbl;
 QComboBox *PortSelector;
 QToolButton *RefreshPorts;
@@ -110,14 +110,14 @@ void settitle() {setWindowTitle("Huawei firmware editor/flasher");}
 void ask_save();
 void removeEditor();
 
-// Слоты обработчиков главного меню
+// Main menu handler slots
 public slots: 
-void  SelectFwFile();  // выбор файла
-void  AppendFwFile();  // добавление файла
-void  SaveFwFile();    // запись полного образа на диск
+void  SelectFwFile();  // file selection
+void  AppendFwFile();  // file append
+void  SaveFwFile();    // write complete image to disk
 void  save_as();
-void  OpenFwFile(QString filename); // открытие файла прошивки
-void SelectPart();     // выбор раздела прошивки
+void  OpenFwFile(QString filename); // open firmware file
+void SelectPart();     // firmware partition selection
 void Menu_Part_Store();
 void Menu_Part_Extract();  
 void Menu_Part_Replace();
@@ -144,7 +144,7 @@ void setModified();
 
 };
 
-// Независимые от лкасса обработчики
+// Class-independent handlers
 void head_copy();
 
 extern MainWindow* mw;

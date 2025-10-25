@@ -16,10 +16,10 @@
 
 void flasher();
 
-// ссылка на селектор портов
+// reference to port selector
 QComboBox* pselector;
 
-// Таблица разделов
+// Partition table
 ptable_list* ptable;
 int npart=0;
 
@@ -27,7 +27,7 @@ QString fwfilename;
 MainWindow* mw;
 
 //*************************************************
-//  Поиск ttyUSB портов и сбор их имен в таблицу
+//  Search for ttyUSB ports and collect their names in a table
 //*************************************************
 void MainWindow::find_ports() {
 
@@ -39,7 +39,7 @@ PortSelector->setCurrentIndex(0);
 }
 
 //*****************************************
-//*  Открытие файла прошивки
+//*  Open firmware file
 //*****************************************
 void MainWindow::OpenFwFile(QString filename) {
   
@@ -51,64 +51,64 @@ QStringList recent=rc.value("/recent/rfiles").toStringList();
 
 in=fopen(filename.toLocal8Bit(),"r");
 if (in == 0) {
-  QMessageBox::critical(0,"Ошибка","Ошибка открытия файла");
+  QMessageBox::critical(0,"Error","Error opening file");
   return;
 }  
 
-// добавляем файл в recent-список
-idx=recent.indexOf(filename); // поиск дубликатов
+// add file to recent-list
+idx=recent.indexOf(filename); // search for duplicates
 if (idx == -1) { 
-  // дубликаты не найдены
+  // no duplicates found
   recent.prepend(filename);
   if (recent.count()>6) recent.removeLast();
 }
 else {
-  // такой файл уже есть - выводим его в начало списка
+  // such file already exists - move it to the beginning of the list
   recent.move(idx,0);
 }  
 rc.setValue("/recent/rfiles",recent);
 
 
-// Поиск разделов и формирование таблицы разделов
+// Search for partitions and form partition table
 ptable->findparts(in); 
 regenerate_partlist();
 partlist->setCurrentRow(0);
 SelectPart(); 
-// поиск цифровой подписи
+// search for digital signature
 if (signlen == -1) {
-  // ищем цифровую подпись
+  // search for digital signature
   search_sign();
   printf("\n signlen = %i",signlen);
-  if (signlen != -1) dload_id|=8; // вставляем флаг наличия подписи
+  if (signlen != -1) dload_id|=8; // insert signature presence flag
 }
 
 EnableMenu();
 if (fwfilename.isEmpty()) {
-  // имя файла по умолчанию
+  // default file name
   fwfilename=filename;
-  // имя файла в заголовке окна
+  // file name in window title
   settitle();
   QString title=windowTitle();
   title.append(" - ");
   title.append(filename);
   setWindowTitle(title);
 }
-// устанавливаем правильный тип прошивки в селекторе типов
+// set correct firmware type in type selector
 dload_id_selector->setCurrentIndex(dload_id&7);
-// флаг сжатия
+// compression flag
 if(ptable->zsize(0)) zflag_selector->setChecked(true);
 
 }  
   
 //*****************************************
-//*  Добавление разделов из файла прошивки
+//*  Append partitions from firmware file
 //*****************************************
 void MainWindow::AppendFwFile() {
   
 QString fwname;
 
 QFileDialog* qf=new QFileDialog(this);
-fwname=qf->getOpenFileName(0,"Выбор файла прошивки",".","firmware (*.fw *.exe *.bin *.BIN);;All files (*.*)");
+fwname=qf->getOpenFileName(0,"Select firmware file",".","firmware (*.fw *.exe *.bin *.BIN);;All files (*.*)");
 delete qf;
 if (fwname.isEmpty()) return;
 OpenFwFile(fwname);
@@ -116,7 +116,7 @@ OpenFwFile(fwname);
 }
 
 //********************************************
-//*  Формирование экранного списка разделов
+//*  Generate on-screen partition list
 //********************************************
 void MainWindow::regenerate_partlist() {
 
@@ -133,7 +133,7 @@ partlist->blockSignals(false);
 }  
 
 //*****************************************
-//*  Выбор нового файла прошивки
+//*  Select new firmware file
 //*****************************************
 void MainWindow::SelectFwFile() {
 
@@ -150,7 +150,7 @@ EnableMenu();
 }
 
 //*****************************************
-//* Выбор последнего открытого файла
+//* Select last opened file
 //*****************************************
 void MainWindow::open_recent_file() {
 
@@ -176,7 +176,7 @@ EnableMenu();
 
   
 //*****************************************
-//*  Разрешение пунктов меню
+//*  Enable menu items
 //*****************************************
 void MainWindow::EnableMenu(){ 
   
@@ -190,12 +190,12 @@ if ((dload_id&8) != 0) Menu_Oper_signinfo->setEnabled(1);
 }
 
 //******************************************************************
-//*  Запись на диск полного файла прошивки с указанием имени файла
+//*  Write complete firmware file to disk with file name specification
 //******************************************************************
 void MainWindow::save_as() {
 
 fw_saver(true,zflag_selector->isChecked());  
-// новое имя файла в заголовке
+// new file name in title
 settitle();
 QString title=windowTitle();
 title.append(" - ");
@@ -206,13 +206,13 @@ modified=false;
 }
 
 //*****************************************
-//*  Перезапись файла прошивки
+//*  Overwrite firmware file
 //*****************************************
 void MainWindow::SaveFwFile() {
 
   
 fw_saver(false,zflag_selector->isChecked());  
-// удаляем звездочку из заголовка
+// remove asterisk from title
 QString str=windowTitle();
 int pos=str.indexOf('*');
 if (pos != -1) {
@@ -224,15 +224,15 @@ modified=false;
   
 
 //*****************************************
-//* Запрос на запись измененного файла
+//* Prompt to save modified file
 //*****************************************
 void MainWindow::ask_save() {
 
 if (modified) {
- // создаем панель запроса на сохранение
+ // create save prompt panel
  QMessageBox msgBox;  
- msgBox.setText("Образ прошивки изменен");
- msgBox.setInformativeText("Сохранить изменения?");
+ msgBox.setText("Firmware image has been modified");
+ msgBox.setInformativeText("Save changes?");
  msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard);
  msgBox.setDefaultButton(QMessageBox::Save);
  int reply = msgBox.exec();  
@@ -243,7 +243,7 @@ modified=false;
   
 
 //*****************************************
-//* Копирование заголовков
+//* Copy headers
 //*****************************************
 void MainWindow::HeadCopy() {
 
@@ -253,7 +253,7 @@ SelectPart();
 
 
 //*********************************************
-//* Удаляем все элементы просмотра разделов
+//* Remove all partition viewing elements
 //*********************************************
 void MainWindow::removeEditor() {
 
@@ -307,7 +307,7 @@ if (spacer != 0) {
 }
 
 //*****************************************
-//*  Выбор раздела из списка
+//*  Select partition from list
 //*****************************************
 void MainWindow::SelectPart() {
 
@@ -315,22 +315,22 @@ QString txt;
 QStringList(plst);
 
 int idx=partlist->currentRow();
-if (idx == -1) return; // пустой список
-// Проверяем и, если надо, сохраняем измененные данные
+if (idx == -1) return; // empty list
+// Check and save modified data if necessary
 if ((hrow != -1)&&(hrow != idx)) {
-  HeaderChanged(); // сохраняем заголовок
-  DataChanged();  // сохранияем блок данных
+  HeaderChanged(); // save header
+  DataChanged();  // save data block
 }  
 
-if ((hrow == idx) && (structure_mode_save == structure_mode->isChecked()))  return; // ложный сигнал, выбран все тот же элемент списка
+if ((hrow == idx) && (structure_mode_save == structure_mode->isChecked()))  return; // false signal, same list element selected
 
 modebuttons->hide();
 
 structure_mode_save=structure_mode->isChecked();
-hrow=idx; // сохранияем для будущей записи заголовка
+hrow=idx; // save for future header write
 
 
-// Вывод значений заголовка
+// Output header values
 txt.sprintf("%-8.8s",ptable->platform(idx));
 Platform_input->setText(txt);
 
@@ -346,19 +346,19 @@ Version_input->setText(txt);
 txt.sprintf("%04x",ptable->code(idx)>>16);
 pcode->setText(txt);
 
-// удаляем преддущий редактор
+// remove previous editor
 removeEditor();
 
 modebuttons->show();
 
-// Режимы структурного просмотра
+// Structured view modes
 if (structure_mode->isChecked()) {
   
-   // Разделы ptable (таблица разделов флешки)
+   // ptable partitions (flash partition table)
    //###########################################
    if ((ptable->ptype(idx) == part_ptable) && (is_ptable(ptable->iptr(idx)))) {
     partmode=part_ptable; 
-    // формирование редактора таблицы разделов
+    // create partition table editor
     ptedit=new QTableWidget(0,9 ,centralwidget);
 //     ptedit->setGeometry(QRect(230, 100, 600, 470));
     plst << "Name" << "start" <<"len" <<"loadsize" <<"loadaddr" << "entry" << "flags" << "type" << "count";
@@ -369,11 +369,11 @@ if (structure_mode->isChecked()) {
     return;
    }
    
-   // Разделы oeminfo
+   // oeminfo partitions
    //###########################################
 
    if (ptable->ptype(idx) == part_oem) {
-    label=new QLabel("Версия WEBUI или DASHBOARD");
+    label=new QLabel("WEBUI or DASHBOARD Version");
     label->setAlignment(Qt::AlignHCenter|Qt::AlignTop);
     EditorLayout->addWidget(label);
     label->setTextFormat(Qt::RichText);
@@ -397,7 +397,7 @@ if (structure_mode->isChecked()) {
     return;
    } 
  
-   // файловые разделы
+   // filesystem partitions
    //###########################################
    if (is_cpio(ptable->iptr(idx))) {
      cpio=new cpioedit(idx,menubar,centralwidget);
@@ -405,7 +405,7 @@ if (structure_mode->isChecked()) {
      return;
    }
 
-   // редактор ядра
+   // kernel editor
    //###########################################
    if (memcmp(ptable->iptr(idx)+128,"ANDROID!",8) == 0) {
      kedit=new kerneledit(idx,centralwidget);
@@ -413,7 +413,7 @@ if (structure_mode->isChecked()) {
      return;
    }  
 
-   // редактор раздела nvdload
+   // nvdload partition editor
    //###########################################
    if ((ptable->ptype(idx) == part_nvram) && (*((uint32_t*)(ptable->iptr(idx))) == NV_FILE_MAGIC)) {
      nvedit=new nvdedit(idx,centralwidget);
@@ -422,13 +422,13 @@ if (structure_mode->isChecked()) {
    }  
 
 }   
-// неформатный тип 
-// создание окна hex-редактора
+// unformatted type 
+// create hex-editor window
  partmode=part_bin;
  hexedit=new hexeditor((char*)ptable->iptr(idx),ptable->psize(idx),menubar,statusbar,centralwidget);
  hexedit->setObjectName(QStringLiteral("HexEditor"));
 
- // формирование данных окна hex-редактора
+ // populate hex-editor window data
  EditorLayout->addWidget(hexedit);
 //  EditorLayout->show();
  hexedit->show();
@@ -436,7 +436,7 @@ if (structure_mode->isChecked()) {
 
 
 //*****************************************
-//*  Сохранение раздела на диск
+//*  Save partition to disk
 //*****************************************
 void MainWindow::Menu_Part_Store() {
   
@@ -447,17 +447,17 @@ FILE* out;
 uint8_t hdr[92];
 
 
-// записываем образ раздела
+// save partition image
 filename.sprintf("%02i-%08x-%s.fw",np,ptable->code(np),ptable->name(np));
-filename=QFileDialog::getSaveFileName(this,"Имя файла",filename,"firmware (*.fw);;All files (*.*)");
+filename=QFileDialog::getSaveFileName(this,"File name",filename,"firmware (*.fw);;All files (*.*)");
 if (filename.isEmpty()) return;
 out=fopen(filename.toLocal8Bit(),"w");
 if (out == 0) {
-  QMessageBox::critical(0,"Ошибка","Ошибка создания файла");
+  QMessageBox::critical(0,"Error","Error creating file");
   return;
 }
 
-// записываем заголовок - upgrade state
+// write header - upgrade state
 bzero(hdr,sizeof(hdr));
 hdr[0]=0x0d;
 fwrite(hdr,1,sizeof(hdr),out);
@@ -467,7 +467,7 @@ fclose(out);
 }
 
 //*****************************************
-//*  Извлечение образа раздела на диск
+//*  Extract partition image to disk
 //*****************************************
 void MainWindow::Menu_Part_Extract() {
   
@@ -477,11 +477,11 @@ QString str;
 FILE* out;
 
 filename.sprintf("%02i-%08x-%s.bin",np,ptable->code(np),ptable->name(np));
-filename=QFileDialog::getSaveFileName(this,"Имя извлекаемого файла",filename,"image (*.bin);;All files (*.*)");
+filename=QFileDialog::getSaveFileName(this,"Extracted file name",filename,"image (*.bin);;All files (*.*)");
 if (filename.isEmpty()) return;
 out=fopen(filename.toLocal8Bit().data(),"w");
 if (out == 0) {
-  QMessageBox::critical(0,"Ошибка","Ошибка открытия файла");
+  QMessageBox::critical(0,"Error","Error opening file");
   return;
 }
 fwrite(ptable->iptr(np),1,ptable->psize(np),out);
@@ -490,7 +490,7 @@ fclose(out);
 
 
 //*****************************************
-//*  Замена образа раздела 
+//*  Replace partition image 
 //*****************************************
 void MainWindow::Menu_Part_Replace() {
 
@@ -499,7 +499,7 @@ QString filename;
 QString str;
 char fileselector[100];
 FILE* in;
-// Выбираем подходящие расширения файлов
+// Select appropriate file extensions
 enum parttypes ptype=ptable->ptype(np);
 printf("\n ptype = %i",ptype);
 switch (ptype) {
@@ -545,14 +545,14 @@ SelectPart();
 }
 
 //*****************************************
-//*  Удаление раздела 
+//*  Delete partition 
 //*****************************************
 void MainWindow::Menu_Part_Delete() {
 
 int32_t ci=partlist->currentRow(); 
 
-if (ptable->index() == 1) return; // последний раздел удалять нельзя
-removeEditor(); // удаляем текущий редактор
+if (ptable->index() == 1) return; // cannot delete last partition
+removeEditor(); // remove current editor
 ptable->delpart(ci);
 regenerate_partlist();
 if (ci< (ptable->index()-1)) partlist->setCurrentRow(ci);
@@ -562,7 +562,7 @@ SelectPart();
 
 
 //*****************************************
-//*  Перемещение раздела вверх 
+//*  Move partition up 
 //*****************************************
 void MainWindow::Menu_Part_MoveUp() {
   
@@ -575,7 +575,7 @@ else partlist->setCurrentRow(0);
 }
 
 //*****************************************
-//*  Перемещение раздела вниз
+//*  Move partition down
 //*****************************************
 void MainWindow::Menu_Part_MoveDown() {
 
@@ -589,7 +589,7 @@ else partlist->setCurrentRow(ptable->index()-1);
 
 
 //********************************************
-// Разрешение редактирования полей заголовка
+// Enable header field editing
 //********************************************
 void MainWindow::Menu_Part_EditHeader() {
   
@@ -602,7 +602,7 @@ Version_input->setReadOnly(0);
 
 
 //********************************************
-//* Установка текущей даты изменения раздела
+//* Set current partition modification date
 //********************************************
 void MainWindow::set_date() {
 
@@ -619,7 +619,7 @@ Time_input->setText(str);
 Time_input->setModified(true);
 }
 //******************************************************
-//* Копирование строки с обрезкой хвостовых пробелов 
+//* Copy string with trailing space trimming 
 //******************************************************
 void fieldcopy(uint8_t* to,QByteArray from, uint32_t len) {
   
@@ -635,15 +635,15 @@ if (i != len) {
 }
 
 //********************************************
-//* Запись областей редактирования заголовка
+//* Write header edit areas
 //********************************************
 void MainWindow::HeaderChanged() {
 
-int32_t ci=hrow; // строка списка разделов, соответствующая заголовку 
+int32_t ci=hrow; // partition list row corresponding to header 
 uint32_t code;
 QMessageBox::StandardButton reply;
 
-// проверяем, изменилось ли хоть что-то
+// check if anything has changed
 if (!(
      (Platform_input->isModified()) ||
      (Date_input->isModified()) ||
@@ -652,7 +652,7 @@ if (!(
      (pcode -> isModified())
    )) return;  
 
-reply=QMessageBox::warning(this,"Запись заголовка","Заголовок раздела изменен, сохранить?",QMessageBox::Ok | QMessageBox::Cancel);
+reply=QMessageBox::warning(this,"Write header","Partition header has been modified, save?",QMessageBox::Ok | QMessageBox::Cancel);
 if (reply != QMessageBox::Ok) return;
 if (Platform_input->isModified())  fieldcopy((uint8_t*)ptable->hptr(ci)->unlock,Platform_input->text().toLocal8Bit(),8);
 if (Date_input->isModified())  fieldcopy((uint8_t*)ptable->hptr(ci)->date,Date_input->text().toLocal8Bit(),16);
@@ -666,7 +666,7 @@ ptable->calc_hd_crc16(ci);
 }
 
 //********************************************
-//* Запись измененных данных
+//* Write modified data
 //********************************************
 void MainWindow::DataChanged() {
 
@@ -674,25 +674,25 @@ char* tdata;
 QByteArray hexcup;
 QMessageBox::StandardButton reply;
 
-//  Измененный раздел oeminfo  
+//  Modified oeminfo partition  
 if (oemedit != 0) {
   tdata=new char[ptable->psize(hrow)];
   bzero(tdata,ptable->psize(hrow));
   fieldcopy((uint8_t*)tdata,oemedit->text().toLocal8Bit(),oemedit->text().size());
   if (memcmp(tdata,ptable->iptr(hrow),ptable->psize(hrow)) != 0) {
-    reply=QMessageBox::warning(this,"Запись раздела","Содержимое раздела изменено, сохранить?",QMessageBox::Ok | QMessageBox::Cancel);
+    reply=QMessageBox::warning(this,"Write partition","Partition content has been modified, save?",QMessageBox::Ok | QMessageBox::Cancel);
     if (reply == QMessageBox::Ok) ptable->replace(hrow,(uint8_t*)tdata,ptable->psize(hrow));
   }
   delete [] tdata;
   return;
 }
-// Измененный раздел,обрабатываемый hex-редактором
+// Modified partition handled by hex-editor
 if (hexedit != 0) {
   tdata=new char[ptable->psize(hrow)];
   hexcup=hexedit->dhex->data();
   memcpy(tdata,hexcup.data(),ptable->psize(hrow));
   if (memcmp(tdata,ptable->iptr(hrow),ptable->psize(hrow)) != 0) {
-    reply=QMessageBox::warning(this,"Запись раздела","Содержимое раздела изменено, сохранить?",QMessageBox::Ok | QMessageBox::Cancel);
+    reply=QMessageBox::warning(this,"Write partition","Partition content has been modified, save?",QMessageBox::Ok | QMessageBox::Cancel);
     if (reply == QMessageBox::Ok) ptable->replace(hrow,(uint8_t*)tdata,ptable->psize(hrow));
   }
   delete [] tdata;
@@ -702,7 +702,7 @@ if (hexedit != 0) {
 }  
 
 //********************************************
-// Запрещение редактирования полей заголовка
+// Disable header field editing
 //********************************************
 void MainWindow::Disable_EditHeader() {
   
@@ -714,7 +714,7 @@ Version_input->setReadOnly(0);
 }
 
 //********************************************
-// Запуск диалога прошивальщика
+// Start flasher dialog
 //********************************************
 void MainWindow::Start_Flasher() {
 
@@ -727,23 +727,23 @@ flasher();
 }
 
 //********************************************
-//  Перезагрузка модема
+//  Reboot modem
 //********************************************
 void MainWindow::Reboot_modem() {
 
 if (PortSelector->count() == 0) {
-   QMessageBox::critical(0,"Ошибка","Не найдены последовательне порты");
+   QMessageBox::critical(0,"Error","No serial ports found");
    return;
 }
 open_port();
 modem_reboot();  
 close_port();
-QMessageBox::information(0,"ОK","Команда перезагрузки передана в модем");
+QMessageBox::information(0,"OK","Reboot command sent to modem");
 }
 
 
 //********************************************
-// Запуск udb-загрузчика
+// Start usb-bootloader
 //********************************************
 void MainWindow::usbdload() {
 
@@ -757,13 +757,13 @@ usbload();
 
 
 //********************************************
-//* Установка признака модификации
+//* Set modification flag
 //********************************************
 void MainWindow::setModified() {
 
 if (modified) return;  
 modified=true;
-// добавляем звездочку в заголовок
+// add asterisk to title
 QString str=windowTitle();
 str.append(" *");
 setWindowTitle(str);
@@ -771,7 +771,7 @@ setWindowTitle(str);
 }
 
 //********************************************************
-//* Статическая функция установки признака модификации
+//* Static function to set modification flag
 //********************************************************
 void set_modified() { mw->setModified(); }
 
@@ -789,9 +789,9 @@ MainWindow* mwin;
 
 QCommandLineParser parser;
 
-parser.setApplicationDescription("Программа для прошивки и восстановления устройств на чипсете Hisilicon Balong v7");
+parser.setApplicationDescription("Program for flashing and recovering devices based on Hisilicon Balong v7 chipset");
 parser.addHelpOption();
-parser.addPositionalArgument("firmware", "Файл прошивки");
+parser.addPositionalArgument("firmware", "Firmware file");
 
 parser.process(app);    
 QStringList args = parser.positionalArguments();
