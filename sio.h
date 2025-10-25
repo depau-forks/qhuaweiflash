@@ -1,4 +1,4 @@
-extern int siofd; // fd для работы с Последовательным портом
+extern int siofd; // fd for working with serial port
 
 void dump(void* mem,int len,long base);
 int send_cmd(unsigned char* incmdbuf, int blen, unsigned char* iobuf);

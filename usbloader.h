@@ -1,7 +1,7 @@
 #include <QtWidgets>
 
 //****************************************************************
-//* Класс диалогового окна
+//* Dialog window class
 //****************************************************************
 class usbldialog: public QDialog {
 
@@ -10,10 +10,10 @@ public:
   QLineEdit* fname=0;
   QLineEdit* ptfname=0;
   
-  // конструктор
+  // constructor
   usbldialog(): QDialog(0){};
 
-  // деструктор
+  // destructor
   ~usbldialog() {
     if (fname != 0) delete fname;
     if (ptfname != 0) delete ptfname;
@@ -26,13 +26,13 @@ public slots:
 };  
 
 //****************************************************************
-// Заголовок загрузчика
+// Bootloader header
 //****************************************************************
 struct lhead{
-  uint32_t lmode;  // режим запуска: 1 - прямой старт, 2 - через перезапуск A-core
-  uint32_t size;   // размер компонента
-  uint32_t adr;    // адрес загрузки компонента в память
-  uint32_t offset; // смещение до компонента от начала файла
+  uint32_t lmode;  // launch mode: 1 - direct start, 2 - through A-core restart
+  uint32_t size;   // component size
+  uint32_t adr;    // component memory load address
+  uint32_t offset; // offset to component from file start
 };
 
 void usbload();

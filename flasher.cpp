@@ -13,22 +13,22 @@
 
 void flasher();
 
-// указатель на класс таблицы разделов
+// pointer to partition table class
 extern ptable_list* ptable;
 int32_t signsize;
-// указатель на открытый последовательный порт
-extern int siofd; // fd для работы с Последовательным портом
+// pointer to open serial port
+extern int siofd; // fd for working with serial port
 
-// размер блока данны, передаваемый модему
+// data block size transmitted to modem
 // #define fblock 4096
 #define fblock 2048
 
 //****************************************************
-//* Определение версии прошивальщика
+//* Determine flasher version
 //*
-//*   0 - нет ответа на команду
-//*   1 - версия 2.0
-//*  -1 - версия не 2.0 
+//*   0 - no response to command
+//*   1 - version 2.0
+//*  -1 - version not 2.0 
 //****************************************************
 int dloadversion() {
 
@@ -38,26 +38,26 @@ QString str;
 uint8_t replybuf[1024];
 
 res=atcmd("^DLOADVER?",replybuf);
-if (res == 0) return 0; // нет ответа - уже HDLC
+if (res == 0) return 0; // no response - already HDLC
 if (strncmp((char*)replybuf+2,"2.0",3) == 0) return 1;
 for (i=2;i<res;i++) {
   if (replybuf[i] == 0x0d) replybuf[i]=0;
 }  
-str.sprintf("Неправильная версия монитора прошивки - %s",replybuf+2);
-QMessageBox::critical(0,"Ошибка",str);
+str.sprintf("Incorrect flash monitor version - %s",replybuf+2);
+QMessageBox::critical(0,"Error",str);
 return -1;
 }
 
 
 //***************************************************
-// Отправка команды начала раздела
+// Send partition start command
 // 
-//  code - 32-битный код раздела
-//  size - полный размер записываемого раздела
+//  code - 32-bit partition code
+//  size - full size of partition to write
 // 
-//*  результат:
-//  false - ошибка
-//  true - команда принята модемом
+//*  result:
+//  false - error
+//  true - command accepted by modem
 //***************************************************
 bool dload_start(uint32_t code,uint32_t size) {
 
@@ -79,14 +79,14 @@ else return true;
 }  
 
 //***************************************************
-// Отправка блока раздела
+// Send partition block
 // 
-//  blk - # блока
-//  pimage - адрес начала образа раздела в памяти
+//  blk - block #
+//  pimage - address of partition image start in memory
 // 
-//*  результат:
-//  false - ошибка
-//  true - команда принята модемом
+//*  result:
+//  false - error
+//  true - command accepted by modem
 //***************************************************
 bool dload_block(uint32_t part, uint32_t blk, uint8_t* pimage) {
 
@@ -100,18 +100,18 @@ static struct __attribute__ ((__packed__)) {
   uint8_t data[fblock];
 } cmd_dload_block;  
   
-blksize=fblock; // начальное значение размера блока
-res=ptable->psize(part)-blk*fblock;  // размер оставшегося куска до конца файла
-if (res<fblock) blksize=res;  // корректируем размер последнего блока
+blksize=fblock; // initial block size value
+res=ptable->psize(part)-blk*fblock;  // size of remaining chunk to end of file
+if (res<fblock) blksize=res;  // adjust last block size
 
-// номер блока
+// block number
 cmd_dload_block.blk=htonl(blk+1);
-// размер блока
+// block size
 cmd_dload_block.bsize=htons(blksize);
-// порция данных из образа раздела
+// data portion from partition image
 memcpy(cmd_dload_block.data,pimage+blk*fblock,blksize);
-// отсылаем блок в модем
-iolen=send_cmd((uint8_t*)&cmd_dload_block,sizeof(cmd_dload_block)-fblock+blksize,replybuf); // отсылаем команду
+// send block to modem
+iolen=send_cmd((uint8_t*)&cmd_dload_block,sizeof(cmd_dload_block)-fblock+blksize,replybuf); // send command
 
 if ((iolen == 0) || (replybuf[1] != 2)) {
   printf("\n sent block:\n");
@@ -126,14 +126,14 @@ else return true;
 
   
 //***************************************************
-// Завершение записи раздела
+// Complete partition write
 // 
-//  code - код раздела
-//  size - размер раздела
+//  code - partition code
+//  size - partition size
 // 
-//*  результат:
-//  false - ошибка
-//  true - команда принята модемом
+//*  result:
+//  false - error
+//  true - command accepted by modem
 //***************************************************
 bool dload_end(uint32_t code, uint32_t size) {
 
@@ -164,7 +164,7 @@ else return true;
 
 
 //******************************************************************************* 
-//* Запуск процесса прошивки
+//* Start flashing process
 //******************************************************************************* 
 void flasher() {
 
@@ -176,11 +176,11 @@ unsigned char cmdver=0x0c;
 uint8_t signflag=0,rebootflag=0;
 
 
-// Варианты ответа модема на HDLC-команды
+// Modem response options for HDLC commands
 unsigned char OKrsp[]={0x0d, 0x0a, 0x4f, 0x4b, 0x0d, 0x0a};
   
 QDialog* Flasher=new QDialog;
-Flasher->setWindowTitle("Прошивка модема");
+Flasher->setWindowTitle("Flash modem");
 QVBoxLayout* vl=new QVBoxLayout(Flasher);  
 
 QFont font;
@@ -188,7 +188,7 @@ font.setPointSize(17);
 font.setBold(true);
 font.setWeight(75);
 
-QLabel* lbl1=new QLabel("Прошивка модема");
+QLabel* lbl1=new QLabel("Flash modem");
 lbl1->setFont(font);
 lbl1->setScaledContents(true);
 lbl1->setStyleSheet("QLabel { color : blue; }");
@@ -196,10 +196,10 @@ lbl1->setStyleSheet("QLabel { color : blue; }");
 
 vl->addWidget(lbl1,4,Qt::AlignHCenter);
 
-QCheckBox* dsign = new QCheckBox("Использовать цифровую подпись",Flasher);
+QCheckBox* dsign = new QCheckBox("Use digital signature",Flasher);
 vl->addWidget(dsign);
 
-// проверяем наличие подписи и деактивируем управляющие кнопки, если ее нет
+// check for signature presence and deactivate controls if absent
 
 if (signlen == -1) {
 //   printf("\n no sign! \n");
@@ -212,7 +212,7 @@ else {
 }
 
 
-QCheckBox* creboot = new QCheckBox("Перезагрузка по окончании прошивки",Flasher);
+QCheckBox* creboot = new QCheckBox("Reboot at the end of flashing",Flasher);
 creboot->setChecked(true);
 vl->addWidget(creboot);
 
@@ -225,14 +225,14 @@ vl->addWidget(buttonBox,10,Qt::AlignHCenter);
 QObject::connect(buttonBox, SIGNAL(accepted()), Flasher, SLOT(accept()));
 QObject::connect(buttonBox, SIGNAL(rejected()), Flasher, SLOT(reject()));
 
-// Запускаем диалог
+// Run dialog
 res=Flasher->exec();
 
-// Вынимаем параметры диалога
+// Extract dialog parameters
 signflag=dsign->isChecked();
 rebootflag=creboot->isChecked();
 
-// Удаляем текущий диалог
+// Delete current dialog
 delete Flasher;
 if (res != QDialog::Accepted) return;
 
@@ -241,130 +241,130 @@ Flasher=new QDialog;
 QFormLayout* glm=new QFormLayout(Flasher);
 
 QLabel* pversion = new QLabel(Flasher);
-glm->addRow("Версия протокола:",pversion);
+glm->addRow("Protocol version:",pversion);
 
 QLabel* cpart = new QLabel(Flasher);
-glm->addRow("Текущий раздел:",cpart);
+glm->addRow("Current partition:",cpart);
 
 QProgressBar* partbar = new QProgressBar(Flasher);
 partbar->setValue(0);
-glm->addRow("Раздел:",partbar);
+glm->addRow("Partition:",partbar);
 
 QProgressBar* totalbar = new QProgressBar(Flasher);
 totalbar->setValue(0);
-glm->addRow("Всего:",totalbar);
+glm->addRow("Total:",totalbar);
 
 Flasher->show();
   
-// Настройка SIO
+// SIO setup
 if (!open_port())  {
-  QMessageBox::critical(0,"Ошибка","Последовательный порт не открывается");
+  QMessageBox::critical(0,"Error","Serial port cannot be opened");
   goto leave;
 }  
   
-tcflush(siofd,TCIOFLUSH);  // очистка выходного буфера
+tcflush(siofd,TCIOFLUSH);  // clear output buffer
 
 res=dloadversion();
 if (res == -1) {
-  QMessageBox::critical(0,"Ошибка","Неподдерживаемая версия протокола прошивки");
+  QMessageBox::critical(0,"Error","Unsupported flash protocol version");
   goto leave;
 }
 
 if (res == 0) {
-  QMessageBox::critical(0,"Ошибка","Порт не находится в режиме прошивки");
+  QMessageBox::critical(0,"Error","Port is not in flash mode");
   goto leave;
 }  
 
-// цифровая подпись
+// digital signature
 if (signflag) { 
   res=send_signver();
   if (!res) {
-    QMessageBox::critical(0,"Ошибка","Ошибка проверки цифровой подписи");
+    QMessageBox::critical(0,"Error","Digital signature verification error");
     goto leave;
   }  
 }  
 
-// Входим в HDLC-режим
+// Enter HDLC mode
 usleep(100000);
 res=atcmd("^DATAMODE",replybuf);
 if (res != 6) {
-  QMessageBox::critical(0,"Ошибка входа в HDLC","Неправильный ответ на команду ^datamode");
+  QMessageBox::critical(0,"HDLC entry error","Incorrect response to ^datamode command");
   goto leave;
 }  
 if (memcmp(replybuf,OKrsp,6) != 0) {
-  QMessageBox::critical(0,"Ошибка входа в HDLC","Команда ^datamode отвергнута модемом");
+  QMessageBox::critical(0,"HDLC entry error","^datamode command rejected by modem");
   goto leave;
 }  
 
 iolen=send_cmd(&cmdver,1,(unsigned char*)replybuf);
 if (iolen == 0) {
-  QMessageBox::critical(0,"Ошибка протокола HDLC","Невозможно получить версию протокола прошивки");
+  QMessageBox::critical(0,"HDLC protocol error","Cannot get flash protocol version");
   goto leave;
 }  
-// отбрасываем начальный 7E если он есть в ответе
+// discard initial 7E if present in response
 if (replybuf[0] == 0x7e) memcpy(replybuf,replybuf+1,iolen-1);
 
 if (replybuf[0] != 0x0d) {
-  QMessageBox::critical(0,"Ошибка протокола HDLC","Модем отверг команду получения версии протокола");
+  QMessageBox::critical(0,"HDLC protocol error","Modem rejected get protocol version command");
   goto leave;
 }  
 
-// выводим версию протокола в форму
+// output protocol version to form
 res=replybuf[1];
 replybuf[res+2]=0;
 txt.sprintf("%s",replybuf+2);
 pversion->setText(txt);
 QCoreApplication::processEvents();
 
-// Главный цикл записи разделов
+// Main partition write loop
 for(part=0;part<ptable->index();part++) {
- // прогресс-бар по разделам 
+ // progress bar by partitions 
  totalbar->setValue(part*100/ptable->index());
- // выводим имя раздела в форму
+ // output partition name to form
  txt.sprintf("%s",ptable->name(part));
  cpart->setText(txt);
 
- // команда начала раздела
+ // partition start command
  if (!dload_start(ptable->code(part),ptable->psize(part))) {
-  txt.sprintf("Раздел %s отвергнут",ptable->name(part)); 
-  QMessageBox::critical(0,"Ошибка",txt);
+  txt.sprintf("Partition %s rejected",ptable->name(part)); 
+  QMessageBox::critical(0,"Error",txt);
   goto leave;
 }  
     
-maxblock=(ptable->psize(part)+(fblock-1))/fblock; // число блоков в разделе
-// Поблочный цикл передачи образа раздела
+maxblock=(ptable->psize(part)+(fblock-1))/fblock; // number of blocks in partition
+// Block-by-block partition image transmission loop
 for(blk=0;blk<maxblock;blk++) {
- // Прогрессбар блоков
+ // Block progress bar
  partbar->setValue(blk*100/maxblock);
  QCoreApplication::processEvents();
 
- // Отсылаем очередной блок
+ // Send next block
   if (!dload_block(part,blk,ptable->iptr(part))) {
-   txt.sprintf("Блок %i раздела %s отвергнут",blk,ptable->name(part)); 
-   QMessageBox::critical(0,"ошибка",txt);
+   txt.sprintf("Block %i of partition %s rejected",blk,ptable->name(part)); 
+   QMessageBox::critical(0,"error",txt);
    goto leave;
  }  
 }    
 
-// закрываем раздел
+// close partition
  if (!dload_end(ptable->code(part),ptable->psize(part))) {
-//   txt.sprintf("Ошибка закрытия раздела %s",ptable->name(part)); 
-//   QMessageBox::critical(0,"ошибка",txt);
+//   txt.sprintf("Error closing partition %s",ptable->name(part)); 
+//   QMessageBox::critical(0,"error",txt);
 //   leave();
 //   return 0;
  }  
-} // конец цикла по разделам
+} // end of partition loop
 
-// Выводим модем из HDLC или, если надо, перезагружаем модем.
+// Exit modem from HDLC or reboot if needed
 if (rebootflag)   modem_reboot();
 else end_hdlc();
 
 totalbar->setValue(100);
 partbar->setValue(100);
 QCoreApplication::processEvents();
-QMessageBox::information(0,"ОК","Запись завершена без ошибок");
+QMessageBox::information(0,"OK","Write completed without errors");
 
-// Завершаем процесс
+// Complete process
 leave:
 
 close_port();
