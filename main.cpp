@@ -530,16 +530,16 @@ strcat(fileselector,";;All files (*.*)");
       
 
 filename.sprintf("%02i-%08x-%s.bin",np,ptable->code(np),ptable->name(np));
-filename=QFileDialog::getOpenFileName(this,"Имя файла с образом раздела",filename,fileselector);
+filename=QFileDialog::getOpenFileName(this,"File name with partition image",filename,fileselector);
 if (filename.isEmpty()) return;
 in=fopen(filename.toLocal8Bit(),"r");
 if (in == 0) {
-  QMessageBox::critical(0,"Ошибка","Ошибка открытия файла");
+  QMessageBox::critical(0,"Error","Error opening file");
   printf("\n file %s",filename.toLocal8Bit().data());
   return;
 }
 ptable->loadimage(np,in);
-hrow=-1; // предыдущие данные НЕ СОХРАНЯТЬ !!!!
+hrow=-1; // previous data DO NOT SAVE !!!!
 SelectPart();
   
 }
@@ -719,7 +719,7 @@ Version_input->setReadOnly(0);
 void MainWindow::Start_Flasher() {
 
 if (PortSelector->count() == 0) {
-   QMessageBox::critical(0,"Ошибка","Не найдены последовательне порты");
+   QMessageBox::critical(0,"Error","No serial ports found");
    return;
 }
   
@@ -749,7 +749,7 @@ void MainWindow::usbdload() {
 
  
 if (PortSelector->count() == 0) {
-   QMessageBox::critical(0,"Ошибка","Не найдены последовательне порты");
+   QMessageBox::critical(0,"Error","No serial ports found");
    return;
 }
 usbload();

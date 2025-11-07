@@ -1,46 +1,46 @@
-// Редактор раздела nvdload 
+// nvdload partition editor 
 
 #ifndef __NVDEDIT_H_H
 #define __NVDEDIT_H_H
 #include <stdint.h>
 #include <QtWidgets>
 
-// Описатели формата заголовка раздела nvdload
-// Выдрано из хуавеевских исходников ядра
+// Descriptors of the nvdload partition header format
+// Taken from the Huawei kernel sources
 
 #define NV_FILE_MAGIC 0x766e  // nv
 
-// Описатель каждого из компонентов 
+// Descriptor of each component 
 struct nv_file_info {
-    uint32_t magic;      // сигнатура 0x766e(nv)
+    uint32_t magic;      // signature 0x766e(nv)
     uint32_t off;            /*file offset in one section*/
     uint32_t len;            /*file lenght */
 };
 
-// Заголовок раздела nvdload 
-// для старых чипсетов (до V7R11 включительно) поле ulSimNumEx и trash отсутствует
+// nvdload partition header 
+// for old chipsets (up to V7R11 inclusive) the ulSimNumEx and trash fields are missing
 struct nv_dload_packet_head {
 
-    struct nv_file_info nv_bin;      // образ nvimg
-    struct nv_file_info xnv_xml;  // Основной XML-компонент
+    struct nv_file_info nv_bin;      // nvimg image
+    struct nv_file_info xnv_xml;  // Main XML component
     struct nv_file_info xnv_xml2; 
-    struct nv_file_info cust_xml; // Дополнительный XML-компонент
+    struct nv_file_info cust_xml; // Additional XML component
     struct nv_file_info cust_xml2; 
     struct nv_file_info xnv_map;  
     struct nv_file_info xnv_map2;  
-    uint32_t ulSimNumEx;                  // Число поддерживаемых модемов минус 2
-    uint8_t trash[36]; // описатели дополнительного модема, здесь не используются
+    uint32_t ulSimNumEx;                  // Number of supported modems minus 2
+    uint8_t trash[36]; // additional modem descriptors, not used here
 //     STRU_XNV_MAP_FILE_INFO xnv_file[0]; 
 };
 
 //***********************************************************
-//* Класс главного окна редактора
+//* Editor main window class
 //***********************************************************
 class nvdedit  : public QWidget {
 
 Q_OBJECT
 
-// Заголовок
+// Header
 struct nv_dload_packet_head hdr;
 
 bool changed=false;
@@ -81,17 +81,17 @@ QPushButton* edit2;
 QPushButton* edit3;
 
 
-// номер данного разела в таблице разделов
+// number of this partition in the partition table
 int pnum;
 
-// локальная копия образа раздела
+// local copy of the partition image
 uint8_t* data;
-uint32_t plen;// длина-128, без хуавеевского заголовка
+uint32_t plen;// length-128, without huawei header
 
-// тип файла
+// file type
 int filetype;
 
-// копии компонентов
+// copies of components
 uint8_t* nvpart;
 uint8_t* xmlpart=0;
 uint8_t* custxmlpart=0;
@@ -123,9 +123,10 @@ void nvexpl();
 void xedit2();
 void xedit3();
 
-//* Слот для утсановки флага-признака изменений
+//* Slot for setting the change flag
 void setchanged() {changed=true;}
 };
 
 
-#endif 
+#endif
+ 

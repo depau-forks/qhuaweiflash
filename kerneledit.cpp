@@ -1,11 +1,11 @@
-// редактор раздела kernel с ядром линукса
+// kernel partition editor with linux kernel
 #include "kerneledit.h"
 #include "MainWindow.h"
 #include <string.h>
 #include "ptable.h"
 
 //********************************************************************
-//* Конструктор класса
+//* Class constructor
 //********************************************************************
 kerneledit::kerneledit(int xpnum, QWidget* parent) : QWidget(parent) {
 
@@ -22,53 +22,53 @@ pnum=xpnum;
 data=ptable->iptr(pnum);
 len=ptable->psize(pnum);
 
-// Локальная копия данных раздела
+// Local copy of partition data
 localdata=new uint8_t[len];
 memcpy(localdata,data,len);
-plen=len-128; // длина данных минус заголовок
+plen=len-128; // data length minus header
 
-// указатель на заголовок раздела
+// pointer to the partition header
 hdr=(struct boot_img_hdr*)(localdata+128);
 
-// Вертикальный компоновщик
+// Vertical layout
 vlm=new QVBoxLayout(this);
 
-// Вынимаем текущие параметры шрифта меток 
+// Get the current font parameters of the labels 
 font=QApplication::font("QLabel");
 oldfont=font;
 
-// Заголовок панели
+// Panel header
 font.setPointSize(font.pointSize()+7);
 font.setBold(true);
-hdrlabel=new QLabel("Редактор раздела KERNEL",this);
+hdrlabel=new QLabel("KERNEL partition editor",this);
 hdrlabel->setFont(font);
 hdrlabel->setStyleSheet("QLabel { color : green; }");
 vlm->addWidget(hdrlabel,0,Qt::AlignHCenter);
 
-// Заголовок списка параметров
+// Parameter list header
 font=oldfont;
 font.setPointSize(font.pointSize()+5);
 font.setBold(true);
-parmlabel=new QLabel("Параметры ядра",this);
+parmlabel=new QLabel("Kernel parameters",this);
 parmlabel->setFont(font);
 parmlabel->setStyleSheet("QLabel { color : blue; }");
 vlm->addWidget(parmlabel);
 vlm->addStretch(1);
 
-// Увеличиваем шрифт по умолчанию на 2 пункта
+// Increase the default font by 2 points
 labelfont=oldfont;
 labelfont.setPointSize(labelfont.pointSize()+2);
 
-// Компоновщик строк с параметрами
+// String layout with parameters
 flm=new QFormLayout(0);
 vlm->addLayout(flm);
 
-// Размер страницы
+// Page size
 str.sprintf("%i",hdr->page_size);
 pgslabel=new QLabel(str,this);
 pgslabel->setFont(labelfont);
 // pgslabel->setFont(labelfont);
-flm->addRow("Размер страницы",pgslabel);
+flm->addRow("Page size",pgslabel);
 flm->labelForField(pgslabel)->setFont(labelfont);
 
 // physical addr for kernel tags
@@ -91,41 +91,41 @@ flm->labelForField(dtlabel)->setFont(labelfont);
 // pname=new QLabel(str,this);
 // flm->addRow("product name",pname);
 
-// параметры загрузки
+// boot parameters
 strncpy(cline,(char*)hdr->cmdline,BOOT_ARGS_SIZE);
 str=cline;
 cmdline=new QLineEdit(str,this);
-flm->addRow("Параметры загрузки",cmdline);
+flm->addRow("Boot parameters",cmdline);
 flm->labelForField(cmdline)->setFont(labelfont);
 
 vlm->addStretch(1);
 
-// Компоновщик списка компонентов
+// Component list layout
 lcomp=new QGridLayout(0);
 lcomp->setVerticalSpacing(15);
 vlm->addLayout(lcomp);
 
-// заголовок таблицы
+// table header
 font=oldfont;
 font.setPointSize(font.pointSize()+3);
 font.setBold(true);
 
-comphdr1=new QLabel("Имя компонента",this);
+comphdr1=new QLabel("Component name",this);
 comphdr1->setFont(font);
 comphdr1->setStyleSheet("QLabel { color : red; }");
 lcomp->addWidget(comphdr1,0,0);
 
-comphdr2=new QLabel("Адрес загрузки",this);
+comphdr2=new QLabel("Load address",this);
 comphdr2->setFont(font);
 comphdr2->setStyleSheet("QLabel { color : orange; }");
 lcomp->addWidget(comphdr2,0,1);
 
-comphdr3=new QLabel("Команды",this);
+comphdr3=new QLabel("Commands",this);
 comphdr3->setFont(font);
 comphdr3->setStyleSheet("QLabel { color : green; }");
 lcomp->addWidget(comphdr3,0,2,1,2,Qt::AlignHCenter);
 
-// имена компонентов
+// component names
 kcomp=new QLabel("Kernel image  ",this);
 kcomp->setFont(labelfont);
 lcomp->addWidget(kcomp,1,0);
@@ -138,7 +138,7 @@ r2comp=new QLabel("Ramdisk2",this);
 r2comp->setFont(labelfont);
 lcomp->addWidget(r2comp,3,0);
 
-// адреса загрузки
+// load addresses
 str.sprintf("%08x",hdr->kernel_addr);
 kaddr=new QLabel(str,this);
 kaddr->setFont(labelfont);
@@ -154,33 +154,33 @@ r2addr=new QLabel(str,this);
 r2addr->setFont(labelfont);
 lcomp->addWidget(r2addr,3,1,Qt::AlignHCenter);
 
-// кнопки извлечения
-kext=new QPushButton("Извлечь",this);
+// extract buttons
+kext=new QPushButton("Extract",this);
 connect(kext,SIGNAL(clicked()),this,SLOT(kextract()));
 lcomp->addWidget(kext,1,2);
 
-r1ext=new QPushButton("Извлечь",this);
+r1ext=new QPushButton("Extract",this);
 connect(r1ext,SIGNAL(clicked()),this,SLOT(r1extract()));
 lcomp->addWidget(r1ext,2,2);
 
-r2ext=new QPushButton("Извлечь",this);
+r2ext=new QPushButton("Extract",this);
 connect(r2ext,SIGNAL(clicked()),this,SLOT(r2extract()));
 lcomp->addWidget(r2ext,3,2);
 
-// кнопки замены
-krepl=new QPushButton("Заменить",this);
+// replace buttons
+krepl=new QPushButton("Replace",this);
 connect(krepl,SIGNAL(clicked()),this,SLOT(kreplace()));
 lcomp->addWidget(krepl,1,3);
 
-r1repl=new QPushButton("Заменить",this);
+r1repl=new QPushButton("Replace",this);
 connect(r1repl,SIGNAL(clicked()),this,SLOT(r1replace()));
 lcomp->addWidget(r1repl,2,3);
 
-r2repl=new QPushButton("Заменить",this);
+r2repl=new QPushButton("Replace",this);
 connect(r2repl,SIGNAL(clicked()),this,SLOT(r2replace()));
 lcomp->addWidget(r2repl,3,3);
 
-// правая распорка
+// right spacer
 rspacer=new QSpacerItem(100,10,QSizePolicy::Expanding);
 lcomp->addItem(rspacer,1,4);
 
@@ -189,22 +189,22 @@ vlm->addStretch(7);
 }
 
 //********************************************************************
-//* Деструктор класса
+//* Class destructor
 //********************************************************************
 kerneledit::~kerneledit() {
 
 QMessageBox::StandardButton reply;
 QString cmd;
 
-// проверяем редактор командной строки 
+// check the command line editor 
 if (cmdline->isModified()) {
   cmd=cmdline->text();
   strncpy((char*)hdr->cmdline,cmd.toLocal8Bit().data(),BOOT_ARGS_SIZE);
 }  
 
-// проверяем, изменились ли данные
+// check if the data has changed
 if ((ptable->psize(pnum) != (plen+128)) || (memcmp(localdata,ptable->iptr(pnum),plen+128) != 0)) {
-  reply=QMessageBox::warning(this,"Запись раздела","Содержимое раздела изменено, сохранить?",QMessageBox::Ok | QMessageBox::Cancel);
+  reply=QMessageBox::warning(this,"Write partition","The content of the partition has been changed, save?",QMessageBox::Ok | QMessageBox::Cancel);
   if (reply == QMessageBox::Ok) {
     ptable->replace(pnum,localdata,plen+128);
   }
@@ -213,10 +213,10 @@ delete localdata;
 }
 
 //********************************************************************
-//* Вычисление адреса компонента
-//*   0 - ядро
-//*   1 - рамдиск 1
-//*   2 - рамдиск 2
+//* Calculating the component address
+//*   0 - kernel
+//*   1 - ramdisk 1
+//*   2 - ramdisk 2
 //********************************************************************
 void kerneledit::setup_adr(int type, uint32_t* adr, uint32_t* rlen, QString* filename=0) {
 uint32_t start=0;
@@ -244,7 +244,7 @@ switch(type) {
     if (filename != 0) *filename="ramdisk2.cpio.gz";
     break;
 }
-// переводим из страниц в байты
+// convert from pages to bytes
 start*=hdr->page_size;
 *adr=start;
 *rlen=size;
@@ -252,10 +252,10 @@ start*=hdr->page_size;
 
 
 //********************************************************************
-//* Извлечение компонентов
-//*   0 - ядро
-//*   1 - рамдиск 1
-//*   2 - рамдиск 2
+//* Extracting components
+//*   0 - kernel
+//*   1 - ramdisk 1
+//*   2 - ramdisk 2
 //********************************************************************
 void kerneledit::extractor(int type) {
 
@@ -264,12 +264,12 @@ uint32_t size;
 QString filename;
 
 setup_adr(type,&start,&size,&filename);
-filename=QFileDialog::getSaveFileName(this,"Имя сохраняемого файла",filename,"All files (*.*)");
+filename=QFileDialog::getSaveFileName(this,"Saved file name",filename,"All files (*.*)");
 if (filename.isEmpty()) return;
 
 QFile out(filename,this);
 if (!out.open(QIODevice::WriteOnly)) {
-    QMessageBox::critical(0,"Ошибка","Ошибка создания файла");
+    QMessageBox::critical(0,"Error","File creation error");
     return;
 }
 out.write((char*)(localdata+128+start),size);
@@ -278,17 +278,17 @@ out.close();
 
 
 //********************************************************************
-//* Слоты для извлечения образов компонентов
+//* Slots for extracting component images
 //********************************************************************
 void kerneledit::kextract() { extractor(0); }
 void kerneledit::r1extract() { extractor(1); }
 void kerneledit::r2extract() { extractor(2); }
 
 //********************************************************************
-//* Замена компонентов
-//*   0 - ядро
-//*   1 - рамдиск 1
-//*   2 - рамдиск 2
+//* Replacing components
+//*   0 - kernel
+//*   1 - ramdisk 1
+//*   2 - ramdisk 2
 //********************************************************************
 void kerneledit::replacer(int type) {
 
@@ -301,50 +301,50 @@ uint8_t* newlocaldata;
 uint8_t* srcptr;
 uint8_t* dstptr;
 
-// размеры компонентов, выравненные на границу страниц флешки
+// component sizes aligned to the flash page boundary
 kernelsize=(hdr->kernel_size+pagesize-1)/pagesize*pagesize;
 r1size=(hdr->ramdisk_size+pagesize-1)/pagesize*pagesize;
 r2size=(hdr->second_size+pagesize-1)/pagesize*pagesize;
 
-// выбор файла
-filename=QFileDialog::getOpenFileName(this,"Имя файла",filename,"All files (*.*)");
+// file selection
+filename=QFileDialog::getOpenFileName(this,"File name",filename,"All files (*.*)");
 if (filename.isEmpty()) return;
 
 QFile out(filename,this);
 if (!out.open(QIODevice::ReadOnly)) {
-    QMessageBox::critical(0,"Ошибка","Ошибка чтения файла");
+    QMessageBox::critical(0,"Error","File read error");
     return;
 }
 
-// Читаем образ компонента из файла
+// Read the component image from the file
 fsize=out.size();
-bound_filesize=(fsize+pagesize-1)/pagesize*pagesize; // округленный до страницы вверх
-char* fbuf=new char[bound_filesize]; // файловый буфер
+bound_filesize=(fsize+pagesize-1)/pagesize*pagesize; // rounded up to the page
+char* fbuf=new char[bound_filesize]; // file buffer
 bzero(fbuf,bound_filesize);
 out.read(fbuf,fsize);
 out.close();
 
-// Вычисляем новый размер раздела
+// Calculate the new partition size
 totalsize=pagesize;
 if (type == 0) totalsize+=bound_filesize;  else totalsize+=kernelsize;
 if (type == 1) totalsize+=bound_filesize;  else totalsize+=r1size;
 if (type == 2) totalsize+=bound_filesize;  else totalsize+=r2size;
 
-// Выделяем память под новый образ раздела
+// Allocate memory for the new partition image
 newlocaldata=new uint8_t[totalsize+128];
 
-// копируем хуавеевский и андроиндый заголовок
+// copy the huawei and android header
 memcpy(newlocaldata,localdata,128+pagesize);
-// перенастраиваем указатель на андроидный заголовок
+// reconfigure the pointer to the android header
 hdr=(struct boot_img_hdr*)(newlocaldata+128);
 
-// настраиваем указатели источника-приемника
+// set up the source-receiver pointers
 srcptr=localdata+pagesize+128;
 dstptr=newlocaldata+pagesize+128;
 
-// копируем разделы
+// copy partitions
 //------------------------
-// ядро
+// kernel
 if (type == 0) {
   memcpy(dstptr,fbuf,bound_filesize);
   srcptr+=kernelsize;
@@ -357,7 +357,7 @@ else {
   dstptr+=kernelsize;
 }
 
-// рамдиск 1
+// ramdisk 1
 if (type == 1) {
   memcpy(dstptr,fbuf,bound_filesize);
   srcptr+=r1size;
@@ -371,7 +371,7 @@ else {
   dstptr+=r1size;
 }
 
-// рамдиск 2
+// ramdisk 2
 if (type == 2) {
   memcpy(dstptr,fbuf,bound_filesize);
   srcptr+=r2size;
@@ -384,9 +384,9 @@ else {
   dstptr+=r2size;
 }
 
-// удаляем файловый буфер
+// delete the file buffer
 delete fbuf;
-// Удаляем старый буфер и кладем на его место новый
+// Delete the old buffer and put a new one in its place
 
 delete localdata;
 localdata=newlocaldata;
@@ -395,7 +395,7 @@ plen=totalsize;
 }
 
 //********************************************************************
-//* Слоты для замены образов компонентов
+//* Slots for replacing component images
 //********************************************************************
 void kerneledit::kreplace() { replacer(0); }
 void kerneledit::r1replace() { replacer(1); }

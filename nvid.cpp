@@ -1,5 +1,5 @@
 // 
-//    Идентификаторы и описатели ячеек nvram
+//    nvram cell identifiers and descriptors
 //
 #include <stdint.h>
 
@@ -11,14 +11,14 @@ struct nvdesc {
 
 
 //*****************************************************
-//*  База данных описателей ячеек 
+//*  Cell descriptor database 
 //*****************************************************
   
 struct nvdesc nvid[] = {
 {    0,"DRV_IMEI","IMEI"},
 {    4,"DRV_RESUME_FLAG",0},
 {    5,"MSP_CALIBRATED_TIME",0},
-{    6,"MSP_SERIAL_NUMBER","Серийный номер"},
+{    6,"MSP_SERIAL_NUMBER","Serial number"},
 {    7,"DRV_LED_CONTROL",0},
 {    8,"MSP_LOGFILE_MAX_SIZE",0},
 {    9,"MSP_WATCHDOG_FLAG",0},
@@ -4182,14 +4182,13 @@ struct nvdesc nvid[] = {
 char dempty[]="";
 
 //*****************************************************
-//*  Поиск описателя по номеру ячейки
+//*  Search for a descriptor by cell number
 //*****************************************************
 char* find_desc(int item) {
 
 int i=0;
-while(nvid[i].name != 0) {
-  if (nvid[i].id == item) return nvid[i].name;
-  i++;
+for (i=0;i< (sizeof(nvid)/sizeof(struct nvdesc)); i++) {
+  if (nvid[i].id == item) return nvid[i].desc;
 }
-return dempty;
+return (char*)""; // cell not found - return an empty name
 }

@@ -1,5 +1,5 @@
 // 
-//  Расчет и проверка CRC-массива, защищающего образ NVRAM
+//  Calculation and verification of the CRC array that protects the NVRAM image
 // 
 #include <stdio.h>
 #include <stdint.h>
@@ -8,7 +8,7 @@
 
 #include "nvexplorer.h"
 
-// таблица констант CRC-32
+// CRC-32 constants table
 
 uint32_t crctab[256] = {
 0x00000000,0x4C11DB7, 0x09823B6E,0x0D4326D9,0x130476DC,0x17C56B6B,0x1A864DB2,0x1E475005,
@@ -46,7 +46,7 @@ uint32_t crctab[256] = {
 };
 
 //***************************************************
-//* Вычисление CRC-32 массива
+//* Calculating the CRC-32 of an array
 //***************************************************
 uint32_t calc_crc32(uint8_t* buf, uint32_t len) {
   
@@ -57,7 +57,7 @@ for(i=0;i<len;i++) {
   crc=(((uint32_t)(buf[i]&0xff)) | (crc<<8)) ^ crctab[crc>>24];
 }
 
-// добавляем 4 нуля поля КС
+// add 4 zeros to the CS field
 for(i=0;i<4;i++) {
   crc=crctab[crc>>24] ^ (crc<<8);
 }
@@ -65,18 +65,18 @@ return crc;
 }
 
 //***************************************************
-//* Определение размер массива КС
+//* Determining the size of the CS array
 //***************************************************
 uint32_t nvexplorer::calc_crcsize() {
 
-if (plen == crcoff) return 0; // нет такого массива
-// размер массива КС
+if (plen == crcoff) return 0; // no such array
+// size of the CS array
 return plen-crcoff-4;
 } 
   
 
 //***************************************************
-//* Вычисление CRC-массива
+//* Calculating the CRC array
 //***************************************************
 void nvexplorer::recalc_crc() {
   
@@ -87,46 +87,46 @@ uint32_t i;
 uint32_t boff;
 
 
-// проверяем флаг наличия CRC
-if (crcmode != 1) return; // только для блочной CRC
+// check the CRC presence flag
+if (crcmode != 1) return; // only for block CRC
 
 crcsize=calc_crcsize();
 
-// выделяем место под CRC-блок
+// allocate space for the CRC block
 csblock=new uint32_t[crcsize>>2];
 
-// начало области данных
+// beginning of the data area
 boff=nvhd.ctrl_size;
 
-// Вычисляем CRC блоков и проверяем ее
+// Calculate the CRC of the blocks and check it
 for (i=0;i<(crcsize>>2);i++) {
-  // коррекция размера последнего блока
+  // correction of the last block size
   if ((crcoff-boff) < 4096) blocksize=crcoff-boff;
-  // читаем блок
+  // read the block
   csblock[i]=calc_crc32(pdata+boff,blocksize);
 }
-// пишем массив CRC в файл
+// write the CRC array to the file
 memcpy(pdata+crcoff+4,csblock,crcsize);
 
 delete [] csblock;  
-// recalc_ctrl_crc(); // для файлов образов прошивок не требуется
+// recalc_ctrl_crc(); // not required for firmware image files
 }  
 
 //****************************************************
-//* Вычисление CRC управляющих структур
+//* Calculation of the CRC of control structures
 //****************************************************
 void nvexplorer::recalc_ctrl_crc() {
   
 uint32_t crc;
 
 crc=calc_crc32(pdata,nvhd.ctrl_size-4);
-// вписываем новую CRC
+// write the new CRC
 memcpy(pdata+nvhd.ctrl_size-4,&crc,4);
 }
 
 
 //**********************************************
-//* Загрузка CRC отдельных ячеек 
+//* Loading the CRC of individual cells 
 //**********************************************
 uint32_t nvexplorer::load_item_crc(int idx) {
   
@@ -138,7 +138,7 @@ return crc;
 
 
 //**********************************************
-//* Расчет CRC отдельных ячеек 
+//* Calculation of the CRC of individual cells 
 //**********************************************
 uint32_t nvexplorer::calc_item_crc(int idx) {
 
@@ -149,19 +149,19 @@ return crc;
 }
 
 //**********************************************
-//* Перерасчет CRC отдельных ячеек 
+//* Recalculation of the CRC of individual cells 
 //**********************************************
 void nvexplorer::restore_item_crc(int idx) {
   
 uint32_t crc;
 
-if (crcmode != 2) return; // только для типов 2
+if (crcmode != 2) return; // only for type 2
 crc=calc_item_crc(idx);
 memcpy(pdata+itemoff_idx(idx)+itemlist[idx].len,&crc,4);
 }
 
 //**********************************************
-//* Проверка CRC отдельных ячеек 
+//* Checking the CRC of individual cells 
 //**********************************************
 bool nvexplorer::verify_item_crc(int idx) {
 

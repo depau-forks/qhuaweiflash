@@ -1,7 +1,7 @@
 #include "hexfileviewer.h"
 
 //***********************************************************
-//* Конструктор HEX-просмотрщика
+//* HEX-viewer constructor
 //***********************************************************
 hexfileviewer::hexfileviewer(cpfiledir* dfile) : QMainWindow() {
   
@@ -11,79 +11,79 @@ QString title;
 setAttribute(Qt::WA_DeleteOnClose);
 
 
-// настройки геометрии окна
+// window geometry settings
 config=new QSettings("forth32","qhuaweiflash",this);
 QRect rect=config->value("/config/HexFileEditorRect").toRect();
 if (rect != QRect(0,0,0,0)) setGeometry(rect);
 show();  
 
-// выводим окно на передний план
+// bring the window to the foreground
 setFocus();
 raise();
 activateWindow();
 
-// сохраняем на будущее входные параметры  
+// save input parameters for the future  
 fileptr=dfile;
 
-// копируем данные в локальный буфер
+// copy data to a local buffer
 plen=fileptr->fsize();
 pdata=new uint8_t[plen];
 memcpy(pdata,fileptr->fdata(),plen);
 
-// заголовок окна
-title="HEX-Просмотр - ";
+// window title
+title="HEX-View - ";
 title.append(fileptr->fname());
 setWindowTitle(title);
 
-// Главное меню
+// Main menu
 menubar = new QMenuBar(this);
 setMenuBar(menubar);
 
-menu_file = new QMenu("Файл",menubar);
+menu_file = new QMenu("File",menubar);
 menubar->addAction(menu_file->menuAction());
 
-// Статусбар
+// Status bar
 statusbar = new QStatusBar(this);
 setStatusBar(statusbar);
 
-// Центральный виджет
+// Central widget
 central=new QWidget(this);
 setCentralWidget(central);
 
-// пункты меню
-menu_file->addAction(QIcon::fromTheme("document-save"),"Сохранить",this,SLOT(save_all()),QKeySequence::Save);
+// menu items
+menu_file->addAction(QIcon::fromTheme("document-save"),"Save",this,SLOT(save_all()),QKeySequence::Save);
 menu_file->addSeparator();
-menu_file->addAction("Выход",this,SLOT(close()),QKeySequence("Esc"));
+menu_file->addAction("Exit",this,SLOT(close()),QKeySequence("Esc"));
 
-// основной компоновщик
+// main layout
 vlm=new QVBoxLayout(central);
 
-// hex-редактор
+// hex-editor
 hed=new hexeditor((char*)pdata,plen,menubar,statusbar,central);
 vlm->addWidget(hed,2);
 
-// слот модификации
+// modification slot
 connect(hed,SIGNAL(dataChanged()),this,SLOT(setChanged()));
 
 hed->setFocus();
 }
 
 //***********************************************************
-//* Деструктор просмотрщика
+//* Viewer destructor
 //***********************************************************
 hexfileviewer::~hexfileviewer() {
 
 QMessageBox::StandardButton reply;
 
-// геометрия главного окна
+// main window geometry
 QRect rect=geometry();
 config->setValue("/config/HexFileEditorRect",rect);
 
-// признак изменения данных
+// data change indicator
 if (datachanged) {
-  reply=QMessageBox::warning(this,"Запись файла","Содержимое файла изменено, сохранить?",QMessageBox::Ok | QMessageBox::Cancel);
+  reply=QMessageBox::warning(this,"Write file","The file content has been changed, save?",QMessageBox::Ok | QMessageBox::Cancel);
   if (reply == QMessageBox::Ok) {
-    // сохранение данных
+    // saving data
     save_all();
   }
 }  
@@ -93,7 +93,7 @@ delete pdata;
 }
 
 //***********************************************************
-//* Сохранение данных в вектор файла
+//* Saving data to a file vector
 //***********************************************************
 void hexfileviewer::save_all() {
 
@@ -106,33 +106,33 @@ memcpy(pdata,xdata.data(),plen);
 
 fileptr->replace_data((uint8_t*)pdata,plen);
 
-// удаляем звездочку из заголовка
+// remove the asterisk from the title
 str=windowTitle();
 pos=str.indexOf('*');
 if (pos != -1) {
   str.truncate(pos-1);
   setWindowTitle(str);
 }  
-// вызываем сигнал- признак модификации
+// call the modification signal
 emit changed();
 
-// восстанавливаем обработчик модификации
+// restore the modification handler
 datachanged=false;
 connect(hed,SIGNAL(dataChanged()),this,SLOT(setChanged()));
 
 }
 
 //***********************************************************
-//* Вызов внешнего слота модификации
+//* Calling an external modification slot
 //***********************************************************
 void hexfileviewer::setChanged() { 
 
 QString str;
 
 datachanged=true;
-// рассоединяем сигнал - он нужен ровно один раз
+// disconnect the signal - it is needed only once
 disconnect(hed,SIGNAL(dataChanged()),this,SLOT(setChanged()));
-// добавляем звездочку в заголовок
+// add an asterisk to the title
 str=windowTitle();
 str.append(" *");
 setWindowTitle(str);

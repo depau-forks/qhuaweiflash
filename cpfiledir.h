@@ -1,5 +1,5 @@
 // 
-//  Сохранение файла прошивки на диск
+//  Saving the firmware file to disk
 // 
 #ifndef _CPFILEDIR_H
 #define _CPFILEDIR_H
@@ -14,7 +14,7 @@
 
 // #include "MainWindow.h"
 
-// Атрибуты cpio-файлов
+// cpio-file attributes
 #define C_IRUSR		000400
 #define C_IWUSR		000200
 #define C_IXUSR		000100
@@ -40,7 +40,7 @@
 
 
 //************************************************************
-//* Заголовок элемента архива
+//* Archive element header
 //************************************************************
 struct __attribute__ ((__packed__)) cpio_header {
    char    c_magic[6];
@@ -61,40 +61,40 @@ struct __attribute__ ((__packed__)) cpio_header {
 typedef struct cpio_header cpio_header_t;
 
 //*****************************************************
-//* Класс-хранилище элемента файловой системы
+//* File system element storage class
 //*****************************************************
 class cpfiledir {
 
-  cpio_header_t* phdr; // ссылка на заголовок
-  char* filename; // указатель на имя файла
-  char* fimage=0; // указатель на тело файла
+  cpio_header_t* phdr; // link to header
+  char* filename; // pointer to file name
+  char* fimage=0; // pointer to file body
     
 public:
   cpfiledir(uint8_t* hdr);
   cpfiledir(cpio_header_t* header, uint8_t* fname, uint8_t* data);
   ~cpfiledir();
-  QList<cpfiledir*>* subdir=0; // ссылка на контейнер поддиректории
+  QList<cpfiledir*>* subdir=0; // link to subdirectory container
 
-//    char* fname() {return (char*)phdr+sizeof(cpio_header_t);} // ссылка на имя файла
-   char* fname() {return filename;} // ссылка на имя файла
-//    char* fdata() {return fname()+nsize();}  // ссылка на тело файла
-   char* fdata() {return fimage;}  // ссылка на тело файла
+//    char* fname() {return (char*)phdr+sizeof(cpio_header_t);} // link to file name
+   char* fname() {return filename;} // link to file name
+//    char* fdata() {return fname()+nsize();}  // link to file body
+   char* fdata() {return fimage;}  // link to file body
    void setfdata(char* data) { fimage=data; }
-   char* cfname(); // имя файла без пути к нему
+   char* cfname(); // file name without path
    void setfname(char* name);
    
-  uint32_t fsize(); // размер файла
-  void setfsize(int size); // установка нового размера файла
-  uint32_t nsize(); // размер имени файла
-  uint32_t totalsize() { return sizeof(cpio_header_t)+nsize()+fsize();} // полный размер архивной записи о файле
-  uint32_t fmode(); // флаги атрибутов файла
+  uint32_t fsize(); // file size
+  void setfsize(int size); // setting new file size
+  uint32_t nsize(); // file name size
+  uint32_t totalsize() { return sizeof(cpio_header_t)+nsize()+fsize();} // full size of the archive record about the file
+  uint32_t fmode(); // file attribute flags
   uint32_t ftime();
   uint32_t fuid();
   uint32_t fgid();
   uint32_t treesize();
   uint32_t store_cpio(uint8_t* pdata);
   void replace_data(uint8_t* pdata, uint32_t len);
-  bool updirflag=false; // признак того, что это ссылка на родительский каталог 
+  bool updirflag=false; // indicator that this is a link to the parent directory 
 };
 
 

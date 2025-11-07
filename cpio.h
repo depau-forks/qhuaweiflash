@@ -1,5 +1,5 @@
 // 
-//  Редактор cpio-файлов
+//  cpio file editor
 // 
 #ifndef _CPIO_H
 #define _CPIO_H
@@ -16,14 +16,14 @@
 #include "cpfiledir.h"
 
 //*****************************************************
-//* Класс редактора cpio-разделов
+//* cpio partition editor class
 //*****************************************************
 class cpioedit: public QWidget {
   
 Q_OBJECT
 
 int pnum;
-// указатели на образ раздела
+// pointers to the partition image
 uint8_t* pdata;
 uint32_t plen;
 
@@ -31,11 +31,11 @@ QToolBar* toolbar;
 QTableWidget* cpiotable=0;
 QVBoxLayout* vlm;
 
-viewer* view; // окно просмотра файлов
-hexfileviewer* hview; // окно hex-редактора
+viewer* view; // file view window
+hexfileviewer* hview; // hex editor window
 
-QList<cpfiledir*>* rootdir=0;   // указатель на вектор корневого раздела
-QList<cpfiledir*>* currentdir;  // вектор текущего каталога
+QList<cpfiledir*>* rootdir=0;   // pointer to the root partition vector
+QList<cpfiledir*>* currentdir;  // current directory vector
 void cpio_hide_dir();
 int current_file_index();
 cpfiledir* selected_file();
@@ -43,7 +43,7 @@ void cpio_show_dir(QList<cpfiledir*>* dir, int focusmode);
 void fileeditor(bool readonly);
 void repack_cpio();
 
-// флаг изменения раздела
+// partition change flag
 bool is_modified=false;
 
 QMenuBar* menubar;
@@ -55,16 +55,16 @@ cpioedit(int xpnum,QMenuBar* mbar, QWidget* parent);
 
 
 public slots:
-void cpio_process_file(int, int); // обработка выбора файла
-void extract_file();  // извлекалка файлов
-void replace_file();  // замена файлов
-void delete_file();  // удаление файлов
-void view_file();   // просмотр
-void edit_file();   // просмотр
-void add_file();    // добавить новый файл
-void add_dir();    // создать каталог
-void hexedit_file();   // hex-просмотр/редактор
-void setModified() {is_modified=true;}  // установка признака модификации содержимого архива
+void cpio_process_file(int, int); // file selection processing
+void extract_file();  // file extractor
+void replace_file();  // file replacement
+void delete_file();  // deleting files
+void view_file();   // view
+void edit_file();   // view
+void add_file();    // add new file
+void add_dir();    // create directory
+void hexedit_file();   // hex-viewer/editor
+void setModified() {is_modified=true;}  // setting the archive content modification flag
 void saveall();
 void menuenabler();
 void go_up();

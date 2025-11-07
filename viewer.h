@@ -1,4 +1,4 @@
-// просмотр и редактирование произвольных файлов 
+// view and edit arbitrary files 
 
 #ifndef __VIEWER_H
 #define __VIEWER_H
@@ -7,7 +7,7 @@
 #include "cpfiledir.h"
 
 //***********************************************************
-//* Класс главного окна 
+//* Main window class 
 //***********************************************************
 class viewer  : public QMainWindow {
 
@@ -20,7 +20,7 @@ uint32_t* slen;
 bool readonly;
 uint8_t* pdata;
 
-QString findtext=""; // текст для поискового запроса
+QString findtext=""; // text for the search query
 
 QWidget* central;
 QSettings* config;
@@ -29,13 +29,13 @@ QTextEdit* ted;
 
 QString textdata;
 
-// Главное меню
+// Main menu
 QMenuBar* menubar;
 QMenu* menu_file;
 QMenu* menu_edit;
 QMenu* menu_view;
 
-// тулбар
+// toolbar
 QToolBar* toolbar;
 
 bool datachanged=false;

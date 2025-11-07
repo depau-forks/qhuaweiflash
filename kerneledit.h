@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <QtWidgets>
 
-// Описатели формата заголовка раздела с ядром
-// Выдрано из mkbootimg от android-sdk
+// Descriptors of the header format of the partition with the kernel
+// Taken from mkbootimg from android-sdk
 #define BOOT_MAGIC "ANDROID!"
 #define BOOT_MAGIC_SIZE 8
 #define BOOT_NAME_SIZE 16
@@ -41,13 +41,13 @@ struct boot_img_hdr
 } __attribute__((packed));
 
 //***********************************************************
-//* Класс главного окна редактора
+//* Editor main window class
 //***********************************************************
 class kerneledit  : public QWidget {
 
 Q_OBJECT
 
-// указатель на структуру заголовка
+// pointer to the header structure
 struct boot_img_hdr* hdr;
 
 QVBoxLayout* vlm;
@@ -86,12 +86,12 @@ void setup_adr(int type, uint32_t* adr, uint32_t* len, QString* filename);
 void extractor(int type);
 void replacer(int type);
 
-// номер данного разела в таблице разделов
+// number of this partition in the partition table
 int pnum;
 
-// локальная копия образа раздела
+// local copy of the partition image
 uint8_t* localdata;
-uint32_t plen;// длина-128, без хуавеевского заголовка
+uint32_t plen;// length-128, without huawei header
 
 public:
 

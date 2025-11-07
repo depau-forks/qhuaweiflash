@@ -1,4 +1,4 @@
-// HEX-просмотр и редактирование файлов из вектора cpio-архива
+// HEX-view and edit files from the cpio-archive vector
 
 #ifndef __HEXFILEVIEWER_H
 #define __HEXFILEVIEWER_H
@@ -8,7 +8,7 @@
 #include "hexeditor.h"
 
 //***********************************************************
-//* Класс главного окна 
+//* Main window class 
 //***********************************************************
 class hexfileviewer  : public QMainWindow {
 
@@ -23,11 +23,11 @@ QSettings* config;
 QVBoxLayout* vlm;
 hexeditor* hed;
 
-// Главное меню
+// Main menu
 QMenuBar* menubar;
 QMenu* menu_file;
 
-// Статусбар
+// Status bar
 QStatusBar* statusbar;
 
 bool datachanged=false;

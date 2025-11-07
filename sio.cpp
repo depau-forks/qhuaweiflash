@@ -1,4 +1,4 @@
-//  Низкоуровневые процедуры работы с последовательным портом и HDLC
+//  Low-level procedures for working with the serial port and HDLC
 
 #include <QtWidgets>
 #include <stdio.h>
@@ -18,19 +18,19 @@ unsigned int nand_cmd=0x1b400000;
 unsigned int spp=0;
 unsigned int pagesize=0;
 unsigned int sectorsize=512;
-unsigned int maxblock=0;     // Общее число блоков флешки
+unsigned int maxblock=0;     // Total number of flash blocks
 char flash_mfr[30]={0};
 char flash_descr[30]={0};
 unsigned int oobsize=0;
 
 struct termios sioparm;
-int siofd=0; // fd для работы с Последовательным портом
+int siofd=0; // fd for working with the Serial port
 
-// ссылка на селектор портов
+// link to the port selector
 extern QComboBox* pselector;
 
 //***********************
-//* Дамп области памяти *
+//* Memory dump *
 //***********************
 
 void dump(void* xbuf,int len,long base) {
@@ -60,7 +60,7 @@ for (i=0;i<len;i+=16) {
 
 
 //*************************************************
-//*  Вычисление CRC-16 
+//*  CRC-16 calculation 
 //*************************************************
 unsigned short crc16(uint8_t* buf, int len) {
 
@@ -107,23 +107,23 @@ return (~crc)&0xffff;
 
 
 //*************************************************
-//*    отсылка буфера в модем
+//*    sending the buffer to the modem
 //*************************************************
 unsigned int send_unframed_buf(uint8_t* outcmdbuf, unsigned int outlen) {
 
 
-tcflush(siofd,TCIOFLUSH);  // сбрасываем недочитанный буфер ввода
-if (write(siofd,"\x7e",1)  == 0) { printf("\n Ошибка записи префикса команды");return 0; } // отсылаем префикс
+tcflush(siofd,TCIOFLUSH);  // reset the unread input buffer
+if (write(siofd,"\x7e",1)  == 0) { printf("\n Error writing command prefix");return 0; } // send the prefix
 
-if (write(siofd,outcmdbuf,outlen) == 0) {   printf("\n Ошибка записи команды");return 0;  }
-tcdrain(siofd);  // ждем окончания вывода блока
+if (write(siofd,outcmdbuf,outlen) == 0) {   printf("\n Error writing command");return 0;  }
+tcdrain(siofd);  // wait for the block to be output
 return 1;
 }
 
 //******************************************************************************************
-//* Прием буфера с ответом из модема
+//* Receiving a buffer with a response from the modem
 //*
-//*  masslen - число байтов, принимаемых единым блоком без анализа признака конца 7F
+//*  masslen - the number of bytes received in a single block without analyzing the end-of-file flag 7F
 //******************************************************************************************
 
 unsigned int receive_reply(uint8_t* iobuf, int masslen) {
@@ -135,36 +135,36 @@ unsigned char replybuf[14000];
 
 incount=0;
 if (read(siofd,&c,1) != 1) {
-//  printf("\n Нет ответа от модема");
-  return 0; // модем не ответил или ответил неправильно
+//  printf("\n No response from the modem");
+  return 0; // the modem did not answer or answered incorrectly
 }
 //if (c != 0x7e) {
-//  printf("\n Первый байт ответа - не 7e: %02x",c);
-//  return 0; // модем не ответил или ответил неправильно
+//  printf("\n The first byte of the response is not 7e: %02x",c);
+//  return 0; // the modem did not answer or answered incorrectly
 //}
 replybuf[incount++]=c;
 
-// чтение массива данных единым блоком при обработке команды 03
+// reading an array of data in a single block when processing command 03
 if (masslen != 0) {
  res=read(siofd,replybuf+1,masslen-1);
  if (res != (masslen-1)) {
-   printf("\nСлишком короткий ответ от модема: %i байт, ожидалось %i байт\n",res+1,masslen);
+   printf("\nToo short a response from the modem: %i bytes, expected %i bytes\n",res+1,masslen);
    dump(replybuf,res+1,0);
    return 0;
  }  
- incount+=masslen-1; // у нас в буфере уже есть masslen байт
+ incount+=masslen-1; // we already have masslen bytes in the buffer
 // printf("\n ------ it mass --------");
 // dump(replybuf,incount,0);
 }
 
-// принимаем оставшийся хвост буфера
+// receive the remaining tail of the buffer
 while (read(siofd,&c,1) == 1)  {
  replybuf[incount++]=c;
 // printf("\n-- %02x",c);
  if (c == 0x7e) break;
 }
 
-// Преобразование принятого буфера для удаления ESC-знаков
+// Converting the received buffer to remove ESC characters
 escflag=0;
 iolen=0;
 for (i=0;i<incount;i++) { 
@@ -188,7 +188,7 @@ return iolen;
 }
 
 //***********************************************************
-//* Преобразование командного буфера с Escape-подстановкой
+//* Converting a command buffer with Escape substitution
 //***********************************************************
 unsigned int convert_cmdbuf(uint8_t* incmdbuf, int blen, uint8_t* outcmdbuf) {
 
@@ -197,13 +197,13 @@ unsigned char cmdbuf[14096];
 
 bcnt=blen;
 memcpy(cmdbuf,incmdbuf,blen);
-// Вписываем CRC в конец буфера
+// Write the CRC at the end of the buffer
 *((unsigned short*)(cmdbuf+bcnt))=crc16(cmdbuf,bcnt);
 bcnt+=2;
 
-// Пребразование данных с экранированием ESC-последовательностей
+// Data conversion with escaping of ESC sequences
 iolen=0;
-outcmdbuf[iolen++]=cmdbuf[0];  // первый байт копируем без модификаций
+outcmdbuf[iolen++]=cmdbuf[0];  // copy the first byte without modification
 for(i=1;i<bcnt;i++) {
    switch (cmdbuf[i]) {
      case 0x7e:
@@ -220,7 +220,7 @@ for(i=1;i<bcnt;i++) {
        outcmdbuf[iolen++]=cmdbuf[i];
    }
  }
-outcmdbuf[iolen++]=0x7e; // завершающий байт
+outcmdbuf[iolen++]=0x7e; // terminating byte
 outcmdbuf[iolen]=0;
 return iolen;
 }
@@ -228,7 +228,7 @@ return iolen;
 
 
 //***************************************************
-//*  Отсылка команды в порт и получение результата  *
+//*  Sending a command to the port and getting the result  *
 //***************************************************
 int send_cmd(unsigned char* incmdbuf, int blen, unsigned char* iobuf) {
   
@@ -236,12 +236,12 @@ unsigned char outcmdbuf[14096];
 unsigned int  iolen;
 
 iolen=convert_cmdbuf(incmdbuf,blen,outcmdbuf);  
-if (!send_unframed_buf(outcmdbuf,iolen)) return 0; // ошибка передачи команды
+if (!send_unframed_buf(outcmdbuf,iolen)) return 0; // command transmission error
 return receive_reply(iobuf,0);
 }
 
 //*************************************************
-//  получение имени текущего tty-порта
+//  getting the name of the current tty-port
 //**************************************************
 char* serial_port_name() {
 
@@ -254,7 +254,7 @@ return portname;
 }
 
 //***************************************************
-// Открытие и настройка последовательного порта
+// Opening and configuring the serial port
 //***************************************************
 int open_port() {
 
@@ -262,7 +262,7 @@ printf("\n open: %s",serial_port_name()); fflush(stdout);
 siofd = open(serial_port_name(), O_RDWR | O_NOCTTY |O_SYNC);
 if (siofd == -1) return 0;
 
-bzero(&sioparm, sizeof(sioparm)); // готовим блок атрибутов termios
+bzero(&sioparm, sizeof(sioparm)); // prepare the termios attribute block
 sioparm.c_cflag = B115200 | CS8 | CLOCAL | CREAD ;
 sioparm.c_iflag = 0;  // INPCK;
 sioparm.c_oflag = 0;
@@ -274,7 +274,7 @@ return 1;
 }
 
 //***************************************************
-//* Закрытие последовательного порта
+//* Closing the serial port
 //***************************************************
 void close_port() {
   
@@ -283,12 +283,12 @@ siofd=0;
 }
 
 //*************************************
-// Настройка времени ожидания порта
+// Setting the port timeout
 //*************************************
 
 void port_timeout(int timeout) {
 
-bzero(&sioparm, sizeof(sioparm)); // готовим блок атрибутов termios
+bzero(&sioparm, sizeof(sioparm)); // prepare the termios attribute block
 sioparm.c_cflag = B115200 | CS8 | CLOCAL | CREAD ;
 sioparm.c_iflag = 0;  // INPCK;
 sioparm.c_oflag = 0;
@@ -299,12 +299,12 @@ tcsetattr(siofd, TCSANOW, &sioparm);
 }
 
 //****************************************************
-//*  Отсылка модему АТ-команды
+//*  Sending an AT command to the modem
 //*  
-//* cmd - буфер с командой
-//* rbuf - буфер для записи ответа
+//* cmd - buffer with a command
+//* rbuf - buffer for writing the answer
 //*
-//* Возвращает длину ответа
+//* Returns the length of the response
 //****************************************************
 int atcmd(char* cmd, uint8_t* rbuf) {
 
@@ -316,38 +316,38 @@ strcat(cbuf,cmd);
 strcat(cbuf,"\r");
 
 port_timeout(100);
-// Вычищаем буфер приемника и передатчика
+// Clean the receiver and transmitter buffers
 tcflush(siofd,TCIOFLUSH);
 
-// отправка команды
+// send command
 write(siofd,cbuf,strlen(cbuf));
 usleep(100000);
 
-// чтение результата
+// reading the result
 res=read(siofd,rbuf,200);
 return res;
 }
   
 
 //*************************************************
-//* Перезагрузка модема
+//* Modem reboot
 //*************************************************
 void modem_reboot() {
 
 uint8_t replybuf[1024];
 uint8_t cmd=0x0a;
 
-send_cmd(&cmd,1,replybuf); // HDLC-команда перезагрузки 
-atcmd("^RESET",replybuf);    // АТ-команда перезагрузки
+send_cmd(&cmd,1,replybuf); // HDLC reboot command 
+atcmd("^RESET",replybuf);    // AT reboot command
 }
 
 //*************************************************
-//* Выход из HDLC-режима
+//* Exiting HDLC mode
 //*************************************************
 void end_hdlc() {
 
 uint8_t replybuf[1024];
 uint8_t cmd=0x01;
   
-send_cmd(&cmd,1,replybuf); // HDLC-команда перезагрузки 
+send_cmd(&cmd,1,replybuf); // HDLC reboot command 
 }	  

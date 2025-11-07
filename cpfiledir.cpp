@@ -1,5 +1,5 @@
 // 
-//  cpfiledir - класс для хранения списка файлов, составляющих cpio-архив
+//  cpfiledir - class for storing a list of files that make up a cpio archive
 // 
 #include <QtCore/QVariant>
 #include <QtWidgets>
@@ -12,54 +12,54 @@
 #include "cpio.h"
 
 //********************************************************************
-//* Конструктор класса хранилища файлов - добавление из cpio-потока
+//* File storage class constructor - adding from cpio stream
 //********************************************************************
 cpfiledir::cpfiledir(uint8_t* iptr) {
   
 phdr=new cpio_header_t;
 
-memcpy(phdr,iptr,sizeof(cpio_header_t)); // копируем себе заголовок
+memcpy(phdr,iptr,sizeof(cpio_header_t)); // copy the header to ourselves
 int nsz=nsize();
 volatile int fsz=fsize();
 
-// имя файла
+// file name
 filename=new char[nsz];
 memcpy(filename,iptr+sizeof(cpio_header_t),nsz);
 
-// тело файла
+// file body
 if (fsz != 0) fimage=new char[fsz];
 memcpy(fimage,iptr+sizeof(cpio_header_t)+nsz,fsz);
 
 }
 
 //********************************************************************
-//* Конструктор для добавления файлов со стороны
+//* Constructor for adding files from the outside
 //********************************************************************
 cpfiledir::cpfiledir(cpio_header_t* header, uint8_t* fname, uint8_t* data) {
 
 phdr=new cpio_header_t;
 
-memcpy(phdr,header,sizeof(cpio_header_t)); // копируем себе заголовок
+memcpy(phdr,header,sizeof(cpio_header_t)); // copy the header to ourselves
 int nsz=nsize();
 volatile int fsz=fsize();
 
-// имя файла
+// file name
 filename=new char[nsz];
 memcpy(filename,fname,nsz);
 
-// тело файла
+// file body
 if (fsz != 0) fimage=new char[fsz];
 memcpy(fimage,data,fsz);
 }
     
 
 //******************************************************
-//* Деструктор класса хранилища файлов
+//* File storage class destructor
 //******************************************************
 cpfiledir::~cpfiledir() {
 
-if ((subdir != 0) && !updirflag) {  // если это не ссылка на родительский каталог
-    // удаляем вектор подкаталога со всем содержимым
+if ((subdir != 0) && !updirflag) {  // if this is not a link to the parent directory
+    // delete the subdirectory vector with all its contents
     qDeleteAll(*subdir);
     subdir->clear();
     delete subdir;
@@ -72,7 +72,7 @@ delete phdr;
 }
 
 //*******************************************************
-//* Установка нового имени файла
+//* Set new file name
 //*******************************************************
 void cpfiledir::setfname (char* name) {
   
@@ -87,7 +87,7 @@ setfsize(len);
 }
 
 //*******************************************************
-//* Получение размера файла
+//* Get file size
 //*******************************************************
  uint32_t cpfiledir:: fsize() {
   
@@ -100,7 +100,7 @@ return val;
 }
 
 //*******************************************************
-//* Установка размера файла
+//* Set file size
 //*******************************************************
 void cpfiledir::setfsize(int size) {
   
@@ -114,7 +114,7 @@ memcpy(phdr->c_filesize,str,8);
 
 
 //*******************************************************
-//* Получение округленной длины имени файла
+//* Get rounded file name length
 //*******************************************************
 uint32_t cpfiledir:: nsize() {
   
@@ -124,13 +124,13 @@ char vstr[9];
 bzero(vstr,9);
 strncpy(vstr,phdr->c_namesize,8);
 val=strtoul(vstr,0,16);
-val+=sizeof(cpio_header_t); // добавляем размер заголовка
-if ((val&3) != 0) val=(val&0xfffffffc)+4; // округляем до 4 байт вверх
+val+=sizeof(cpio_header_t); // add header size
+if ((val&3) != 0) val=(val&0xfffffffc)+4; // round up to 4 bytes
 return val-sizeof(cpio_header_t);
 }
 
 //**********************************************************
-//* Получение чистого имени файла без предшествующего пути
+//* Get clean file name without preceding path
 //**********************************************************
 char* cpfiledir::cfname() {
   
@@ -142,7 +142,7 @@ else return ptr+1;
 }
 
 //*******************************************************
-//* Получение времени создания файла
+//* Get file creation time
 //*******************************************************
 uint32_t cpfiledir::ftime() {
   
@@ -157,7 +157,7 @@ return val;
 
 
 //*******************************************************
-//* Получение атрибутов файла
+//* Get file attributes
 //*******************************************************
 uint32_t cpfiledir::fmode() {
   
@@ -171,7 +171,7 @@ return val;
 }
 
 //*******************************************************
-//* Получение группы файла
+//* Get file group
 //*******************************************************
 uint32_t cpfiledir::fgid() {
   
@@ -185,7 +185,7 @@ return val;
 }
 
 //*******************************************************
-//* Получение владельца файла
+//* Get file owner
 //*******************************************************
 uint32_t cpfiledir::fuid() {
   
@@ -199,14 +199,14 @@ return val;
 }
 
 //*****************************************************************
-//* Получение полного размера файла или всех файлов в подкаталоге
+//* Get the full size of a file or all files in a subdirectory
 //*****************************************************************
 uint32_t cpfiledir::treesize() {
 
 uint32_t sum=0;
 int i;
 
-if (subdir == 0) return totalsize(); // для некаталогов
+if (subdir == 0) return totalsize(); // for non-directories
 for(i=1;i<subdir->count();i++) {
   sum+=subdir->at(i)->treesize();
 }
@@ -214,9 +214,9 @@ return totalsize()+sum;
 }
 
 //*****************************************************************
-//* Перепаковка текущего каталога в cpio-архив
-//*  ptr - буфер для сохранения данных
-//*  возвращает размер полученного архива
+//* Repacking the current directory into a cpio archive
+//*  ptr - buffer for saving data
+//*  returns the size of the received archive
 //*****************************************************************
 uint32_t cpfiledir::store_cpio(uint8_t* ptr) {
 
@@ -224,24 +224,24 @@ int i;
 uint32_t len=sizeof(cpio_header_t);
 uint32_t size,nlen;
 
-// сохраняем заголовок
+// save the header
 memcpy(ptr,phdr,len);
-// имя файла
+// file name
 size=nsize();
 memcpy(ptr+len,filename,size);
 len+=size;
-//тело файла
+//file body
 size=fsize();
 memcpy(ptr+len,fimage,size);
 len+=size;
-// округляемся до 4 байт
+// round up to 4 bytes
 if ((len&3) != 0) {
   nlen=(len&0xfffffffc)+4;
   bzero(ptr+len,nlen-len);
   len=nlen;
 }
 
-// обрабатываем подкаталоги
+// process subdirectories
 
 if (subdir != 0) {
   for(i=1;i<subdir->count();i++) {
@@ -253,7 +253,7 @@ return len;
 }
 
 //*******************************************************
-//* Замена тела файла
+//* Replacing the file body
 //*******************************************************
 void cpfiledir::replace_data(uint8_t* pdata, uint32_t len) {
 
@@ -268,7 +268,7 @@ setfsize(len);
 //##############################################################################################################################################
   
 //*******************************************************
-//* Выделение имени файла из заголовка cpio-архива
+//* Extracting the file name from the cpio archive header
 //*******************************************************
 void extract_filename(uint8_t* iptr, char* filename) {
 
@@ -276,7 +276,7 @@ strcpy(filename,(char*)(iptr+sizeof(cpio_header_t)));
 }
 
 //*******************************************************
-//* Поиск подкаталога по имени
+//* Search for a subdirectory by name
 //*******************************************************
 QList<cpfiledir*>* find_dir(char* name, QList<cpfiledir*>* updir) {
   
@@ -290,7 +290,7 @@ return 0;
 }
 
 //*******************************************************
-//* Поиск файла по имени в указанном каталоге
+//* Search for a file by name in the specified directory
 //*******************************************************
 int find_file(QString name, QList<cpfiledir*>* dir) {
 
@@ -305,7 +305,7 @@ return -1;
   
   
 //*******************************************************
-//* Определение наличия cpio-потока
+//* Determining the presence of a cpio stream
 //*******************************************************
 int is_cpio(uint8_t* ptr) {
 
@@ -318,60 +318,60 @@ else {
 }
 
 //*******************************************************
-//* Загрузка в вектор единичного файла
+//* Loading a single file into a vector
 //*
-//* iptr - ссылка на заголовок файла в cpio-потоке
-//* dir - указатель на каталог, к которому относится файл
-//* plen - общая длина области памяти, хранящей архив
-//* filename - имя файла без предшествующего пути.
+//* iptr - link to the file header in the cpio stream
+//* dir - pointer to the directory to which the file belongs
+//* plen - the total length of the memory area storing the archive
+//* filename - file name without the preceding path.
 //*******************************************************
 uint32_t cpio_load_file(uint8_t* iptr, QList<cpfiledir*>* dir, int plen, char* fname) {
 
 char* dfname=(char*)"..";  
 QString str;
-// класс, куда загружаются описатели данного файла
+// class where the descriptors of this file are loaded
 cpfiledir* fd;
-char filename[256]; // буфер для копии имени файла
+char filename[256]; // buffer for a copy of the file name
 char* slptr;
-QList<cpfiledir*>* fdir; // подкаталог для поиска остатка имени файла
+QList<cpfiledir*>* fdir; // subdirectory to search for the rest of the file name
 strncpy(filename,fname,256);      
 
-// Корневой каталог
+// Root directory
 if ((strlen(filename) == 1) && (filename[1] != '.')) {
   fd=new cpfiledir(iptr);
-  fd->subdir=0; // нет подкаталога  
+  fd->subdir=0; // no subdirectory  
   dir->append(fd);
   return fd->totalsize();
 }
-// Проверяем наличие пути к файлу      
+// Check if the file path exists      
 slptr=strchr(filename,'/');
 
 if (slptr != 0) {
-  // это еще не конечное имя файла, а элемент пути
-  *slptr=0; // разрезаем имя файла на верхний каталог и остальное
-  slptr++;  // теперь slptr показывает на остаток имени файла
-  fdir=find_dir(filename, dir); // ищем подкаталог в текущем каталоге
+  // this is not yet the final file name, but a path element
+  *slptr=0; // split the file name into the top directory and the rest
+  slptr++;  // now slptr points to the rest of the file name
+  fdir=find_dir(filename, dir); // look for a subdirectory in the current directory
   if (fdir == 0) {
-    str.sprintf("В потоке обнаружен файл без каталога - %s",fname);
-    QMessageBox::critical(0,"Ошибка CPIO",str);
-    return 0; // не нашли - ошибка структуры, файл без каталога
+    str.sprintf("File without a directory found in the stream - %s",fname);
+    QMessageBox::critical(0,"CPIO Error",str);
+    return 0; // not found - structure error, file without a directory
   }
-// загружаем файл в вектор подкаталога   
+// load the file into the subdirectory vector   
   return cpio_load_file(iptr,fdir,plen,slptr);
 }  
-// Это - настоящее конечное имя файла
-// для каталога создаем вектор-подкаталог
+// This is the real final file name
+// for a directory, create a vector-subdirectory
 fd=new cpfiledir(iptr);
 if ((fd->fmode()&C_ISDIR) != 0) {
-   // вектор подкаталога
+   // subdirectory vector
    fd->subdir=new QList<cpfiledir*>;
-   // указатель на каталог верзнего уровня (то есть вот этот)
+   // pointer to the upper-level directory (i.e. this one)
    cpfiledir* upfd=new cpfiledir(iptr);
    upfd->subdir=dir;
-   // имя файла для него - ".."
+   // file name for it is ".."
    upfd->setfname(dfname);
-   upfd->updirflag=true;  // признак ссылки на каталог верхнего уровня
-   // добавляем эту запись первой в вектор подкаталога
+   upfd->updirflag=true;  // sign of a link to the upper-level directory
+   // add this entry first to the subdirectory vector
    fd->subdir->append(upfd);
 }  
 dir->append(fd);
@@ -379,7 +379,7 @@ return fd->totalsize();
 }
 
 //*******************************************************
-//* Подсчет полного размера загруженного архива
+//* Calculating the full size of the loaded archive
 //*******************************************************
 uint32_t fullsize(QList<cpfiledir*>* root) {
   

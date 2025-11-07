@@ -17,7 +17,7 @@ QMenuBar* menubar;
 QStatusBar* statusbar;
 QMenu* menu_edit;
 
-QMenu* hwidth; // ширина редактора
+QMenu* hwidth; // editor width
 QAction* w16;
 QAction* w32;
 QAction* w48;
@@ -29,11 +29,11 @@ QAction* menu_enlarge_font;
 QAction* menu_reduce_font;
 QAction* menu_ro;
 
-int bpl=16; // ширина строки редактора в байтах
+int bpl=16; // editor line width in bytes
 QFont font;
 
-QLabel* status_adr_info; // отображение адреса в статусбаре
-QLabel* roindicator;  // индикатор режима r/o - r/w
+QLabel* status_adr_info; // display address in status bar
+QLabel* roindicator;  // r/o - r/w mode indicator
 
 bool readonly=true;
 
@@ -50,9 +50,9 @@ void WidthSelector(QAction* sel);
 void ShowAddres(qint64 adr);
 void EnlargeFont();
 void ReduceFont();
-// переключалка режима только чтение
+// read-only mode switch
 void ROswitch();
-void dchook() { emit dataChanged(); } // приемник datachanged() от qhexedit
+void dchook() { emit dataChanged(); } // datachanged() receiver from qhexedit
 
 signals:
 void dataChanged();  

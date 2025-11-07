@@ -1,4 +1,4 @@
-//-------------- Редактор двоичных образов NVRAM ----------------------------
+//-------------- NVRAM binary image editor ----------------------------
 #ifndef _NVEXPLORER_H_
 #define _NVEXPLORER_H_
 #include <stdint.h>
@@ -7,67 +7,67 @@
 
 
 
-//------------------------- Структуры данных файла nvram ------------------------------
-// Хуавеевские типы данных
+//------------------------- nvram file data structures ------------------------------
+// Huawei data types
 #define U32 uint32_t 
 #define U16 uint16_t
 #define U8 uint8_t
 
-#define FILE_MAGIC_NUM 0x224e4944 // Сигнатура заголовка файла
+#define FILE_MAGIC_NUM 0x224e4944 // File header signature
 
-//  Структура файла NVRAM
+//  NVRAM file structure
 // 
-//------- управляющая Структура -----------------
-// +00 Заголовок (nvfile_header) - 96 байта
-// +file_offset - каталог файлов
-// +item_offset - каталог ячеек
-// 4 байта CRC управляющей структуры
-//-------- Данные ячеек ----------------------
-// данные идут последовательно ячейка за ячейкой, без разрывов
+//------- control structure -----------------
+// +00 Header (nvfile_header) - 96 bytes
+// +file_offset - file catalog
+// +item_offset - cell catalog
+// 4 bytes of CRC of the control structure
+//-------- Cell data ----------------------
+// data goes sequentially cell by cell, without gaps
 //
 
 
-// Струкура заголовка nv-файла
+// nv-file header structure
 struct nvfile_header {
 
-    U32 magicnum;   // сигнатура
-    U32 ctrl_size;  // размер управляющих структур (смещение до данных)
+    U32 magicnum;   // signature
+    U32 ctrl_size;  // size of control structures (offset to data)
     U16 version;    // * file version * /
-    U8 modem_num;   // номер модема для мультимодемных конфигураций
-    U8 crcflag;     // признак наличия CRC
-    U32 file_offset; // смещение до списка файлов
-    U32 file_num;    // число файлов в списке 
-    U32 file_size;   // размер списка файлов
-    U32 item_offset;  // смещение до списка ячеек
-    U32 item_count;   // число ячеек в списке
-    U32 item_size;    // размер списка ячеек
+    U8 modem_num;   // modem number for multi-modem configurations
+    U8 crcflag;     // CRC presence flag
+    U32 file_offset; // offset to the file list
+    U32 file_num;    // number of files in the list 
+    U32 file_size;   // file list size
+    U32 item_offset;  // offset to the cell list
+    U32 item_count;   // number of cells in the list
+    U32 item_size;    // cell list size
     U8 reserve2 [12];
-    U32 timetag [4]; // отметка воемени
-    U8 product_version [32]; // версия устройства
+    U32 timetag [4]; // time stamp
+    U8 product_version [32]; // device version
 };
 
-//  Элемент каталога файлов
+//  File catalog element
 struct nv_file {
-    U32 id; // номер файла
-    U8 name [28]; // имя файла
-    U32 size; // размер файла
-    U32 offset; // смещение до файла
+    U32 id; // file number
+    U8 name [28]; // file name
+    U32 size; // file size
+    U32 offset; // offset to the file
 };
 
-// Элемент каталога ячеек
+// Cell catalog element
 struct nv_item {
-    U16 id; // номер ячейки
-    U16 len; // размер в байтах
-    U32 off; // смещение от начала файла
-    U16 file_id; // файл, к которому относится ячейка
-    U16 priority; // приоритет ячейки
-    U8 modem_num; // номер модема
+    U16 id; // cell number
+    U16 len; // size in bytes
+    U32 off; // offset from the beginning of the file
+    U16 file_id; // the file to which the cell belongs
+    U16 priority; // cell priority
+    U8 modem_num; // modem number
     U8 reserved [3]; 
 };
 
 
 //***********************************************************
-//* Класс главного окна редактора
+//* Editor main window class
 //***********************************************************
 class nvexplorer  : public QMainWindow {
 
@@ -79,14 +79,14 @@ uint8_t* srcdata;
 uint8_t* pdata;
 uint32_t plen;
 
-struct nvfile_header nvhd; // заголовок nvram-файла
-// Каталог файлов
+struct nvfile_header nvhd; // nvram-file header
+// File catalog
 struct nv_file flist[15];
-// каталог ячеек
+// cell catalog
 struct nv_item* itemlist;
-// uint32_t maxitemlen=0; // максимальный размер ячейки
+// uint32_t maxitemlen=0; // maximum cell size
 
-// Подпрограммы библиотеки nvio для доступа к структурам nvram
+// nvio library subroutines for accessing nvram structures
 uint32_t fileoff(int fid);
 int32_t fileidx(int fid);
 uint32_t itemoff_idx(int idx);
@@ -97,14 +97,14 @@ int load_item(int item, char* buf);
 void datacell(int);
 void changed_item(int);
 
-// тип CRC, используемый в файле
-// 0 - нет crc
-// 1 - первый тип CRC, для V7R11, с массивом контрольных сумм
-// 2 - второй тип CRC, для V7R22, с индивидуальной КС
+// CRC type used in the file
+// 0 - no crc
+// 1 - the first type of CRC, for V7R11, with an array of checksums
+// 2 - the second type of CRC, for V7R22, with an individual CS
 int crcmode;
-// Смещение до поля CRC в образе nvram
+// Offset to the CRC field in the nvram image
 uint32_t crcoff;
-// Подпрограммы работы с CRC
+// Subroutines for working with CRC
 uint32_t calc_crcsize();
 void recalc_crc();
 void recalc_ctrl_crc();
@@ -118,16 +118,16 @@ QWidget* central;
 QSettings* config;
 QVBoxLayout* vlm;
 
-// таблица nvram
+// nvram table
 QTableWidget* nvtable;
 
-// Главное меню
+// Main menu
 QMenuBar* menubar;
 QMenu* menu_file;
 QMenu* menu_edit;
 QMenu* menu_view;
 
-// тулбар
+// toolbar
 QToolBar* toolbar;
 
 void zoom(int);

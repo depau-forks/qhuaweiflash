@@ -1,9 +1,9 @@
-// просмотр и редактирование произвольных файлов 
+// view and edit arbitrary files 
 
 #include "viewer.h"
 
 //***********************************************************
-//* Конструктор просмотрщика
+//* Viewer constructor
 //***********************************************************
 viewer::viewer(uint8_t* srcdata, uint32_t* srclen, uint8_t rmode, char* fname, cpfiledir* dfile) : QMainWindow() {
   
@@ -11,117 +11,117 @@ QString title;
 QFont font;
 uint32_t plen;
 
-// настройки геометрии окна
+// window geometry settings
 show();  
 setAttribute(Qt::WA_DeleteOnClose);
 
 config=new QSettings("forth32","qhuaweiflash",this);
 QRect rect=config->value("/config/EditorRect").toRect();
 if (rect != QRect(0,0,0,0)) setGeometry(rect);
-// выводим окно на передний план
+// bring the window to the foreground
 setFocus();
 raise();
 activateWindow();
 
-// сохраняем на будущее входные параметры  
+// save input parameters for the future  
 fileptr=dfile;
 readonly=rmode;
 sdata=srcdata;
 slen=srclen;
 
-// определяем размер буфера и создаем его
+// determine the buffer size and create it
 if (fileptr != 0)  plen=fileptr->fsize();
 else plen=*slen;
 pdata=new uint8_t[plen+1];
 
-// копируем данные в локальный буфер
+// copy data to a local buffer
 if (fileptr != 0) memcpy(pdata,fileptr->fdata(),plen);
 else memcpy(pdata,srcdata,plen);
 
-// ограничитель строки
+// line delimiter
 pdata[plen]=0; 
 
-// заголовок окна
-if (readonly) title="Просмотр - ";
-else title="Редактирование - ";
+// window title
+if (readonly) title="View - ";
+else title="Editing - ";
 title.append(fname);
 setWindowTitle(title);
 
-// Главное меню
+// Main menu
 menubar = new QMenuBar(this);
 setMenuBar(menubar);
 
-menu_file = new QMenu("Файл",menubar);
+menu_file = new QMenu("File",menubar);
 menubar->addAction(menu_file->menuAction());
 
-menu_edit = new QMenu("Правка",menubar);
+menu_edit = new QMenu("Edit",menubar);
 menubar->addAction(menu_edit->menuAction());
 
-menu_view = new QMenu("Вид",menubar);
+menu_view = new QMenu("View",menubar);
 menubar->addAction(menu_view->menuAction());
 
 
-// тулбар
+// toolbar
 toolbar=new QToolBar(this);
 addToolBar(toolbar);
 
-// Центральный виджет
+// Central widget
 central=new QWidget(this);
 setCentralWidget(central);
 
-// основной компоновщик
+// main layout
 vlm=new QVBoxLayout(central);
 
-// текстовый редактор
+// text editor
 ted=new QTextEdit(central);
 ted->setReadOnly(readonly);
 vlm->addWidget(ted,2);
 
-// шрифт редактора
+// editor font
 font=qvariant_cast<QFont>(config->value("/config/EditorFont"));
 ted->setFont(font);
 
-// наполнение текстового редактора
+// filling the text editor
 textdata=(char*)pdata;
 ted->append(textdata);
 
-// пункты меню
-menu_file->addAction(QIcon::fromTheme("document-save"),"Сохранить",this,SLOT(save_all()),QKeySequence::Save);
-toolbar->addAction(QIcon::fromTheme("document-save"),"Сохранить",this,SLOT(save_all()));
+// menu items
+menu_file->addAction(QIcon::fromTheme("document-save"),"Save",this,SLOT(save_all()),QKeySequence::Save);
+toolbar->addAction(QIcon::fromTheme("document-save"),"Save",this,SLOT(save_all()));
 menu_file->addSeparator();
-menu_file->addAction("Выход",this,SLOT(close()),QKeySequence("Esc"));
+menu_file->addAction("Exit",this,SLOT(close()),QKeySequence("Esc"));
 
 toolbar->addSeparator();
 
 if (!readonly) {
-  menu_edit->addAction(QIcon::fromTheme("edit-undo"),"Отменить",ted,SLOT(undo()),QKeySequence::Undo);
-  toolbar->addAction(QIcon::fromTheme("edit-undo"),"Отменить",ted,SLOT(undo()));
-  menu_edit->addAction(QIcon::fromTheme("edit-redo"),"Повторить",ted,SLOT(redo()),QKeySequence::Redo);
-  toolbar->addAction(QIcon::fromTheme("edit-redo"),"Повторить",ted,SLOT(redo()));
+  menu_edit->addAction(QIcon::fromTheme("edit-undo"),"Cancel",ted,SLOT(undo()),QKeySequence::Undo);
+  toolbar->addAction(QIcon::fromTheme("edit-undo"),"Cancel",ted,SLOT(undo()));
+  menu_edit->addAction(QIcon::fromTheme("edit-redo"),"Redo",ted,SLOT(redo()),QKeySequence::Redo);
+  toolbar->addAction(QIcon::fromTheme("edit-redo"),"Redo",ted,SLOT(redo()));
   menu_edit->addSeparator();
-  menu_edit->addAction(QIcon::fromTheme("edit-cut"),"Вырезать",ted,SLOT(cut()),QKeySequence::Cut);
-  toolbar->addAction(QIcon::fromTheme("edit-cut"),"Вырезать",ted,SLOT(cut()));
+  menu_edit->addAction(QIcon::fromTheme("edit-cut"),"Cut",ted,SLOT(cut()),QKeySequence::Cut);
+  toolbar->addAction(QIcon::fromTheme("edit-cut"),"Cut",ted,SLOT(cut()));
 }
-menu_edit->addAction(QIcon::fromTheme("edit-copy"),"Копировать",ted,SLOT(copy()),QKeySequence::Copy);
-toolbar->addAction(QIcon::fromTheme("edit-copy"),"Копировать",ted,SLOT(copy()));
+menu_edit->addAction(QIcon::fromTheme("edit-copy"),"Copy",ted,SLOT(copy()),QKeySequence::Copy);
+toolbar->addAction(QIcon::fromTheme("edit-copy"),"Copy",ted,SLOT(copy()));
 
 if (!readonly) {
-  menu_edit->addAction(QIcon::fromTheme("edit-paste"),"Вставить",ted,SLOT(paste()),QKeySequence::Paste);
-  toolbar->addAction(QIcon::fromTheme("edit-paste"),"Вставить",ted,SLOT(paste()));
+  menu_edit->addAction(QIcon::fromTheme("edit-paste"),"Paste",ted,SLOT(paste()),QKeySequence::Paste);
+  toolbar->addAction(QIcon::fromTheme("edit-paste"),"Paste",ted,SLOT(paste()));
   toolbar->addSeparator();
 }
-menu_edit->addAction(QIcon::fromTheme("edit-find"),"Найти...",this,SLOT(find()),QKeySequence::Find);
-toolbar->addAction(QIcon::fromTheme("edit-find"),"Найти...",this,SLOT(find()));
-menu_edit->addAction(QIcon::fromTheme("edit-find"),"Найти далее",this,SLOT(findnext()),QKeySequence::FindNext);
+menu_edit->addAction(QIcon::fromTheme("edit-find"),"Find...",this,SLOT(find()),QKeySequence::Find);
+toolbar->addAction(QIcon::fromTheme("edit-find"),"Find...",this,SLOT(find()));
+menu_edit->addAction(QIcon::fromTheme("edit-find"),"Find next",this,SLOT(findnext()),QKeySequence::FindNext);
 
 
-menu_view->addAction(QIcon::fromTheme("zoom-in"),"Увеличить шрифт",ted,SLOT(zoomIn()),QKeySequence("Ctrl++"));
-toolbar->addAction(QIcon::fromTheme("zoom-in"),"Увеличить шрифт",ted,SLOT(zoomIn()));
-menu_view->addAction(QIcon::fromTheme("zoom-out"),"Уменьшить шрифт",ted,SLOT(zoomOut()),QKeySequence("Ctrl+-"));
-toolbar->addAction(QIcon::fromTheme("zoom-out"),"Уменьшить шрифт",ted,SLOT(zoomOut()));
-menu_view->addAction(QIcon::fromTheme("preferences-desktop-font"),"Шрифт...",this,SLOT(fontselector()));
+menu_view->addAction(QIcon::fromTheme("zoom-in"),"Increase font",ted,SLOT(zoomIn()),QKeySequence("Ctrl++"));
+toolbar->addAction(QIcon::fromTheme("zoom-in"),"Increase font",ted,SLOT(zoomIn()));
+menu_view->addAction(QIcon::fromTheme("zoom-out"),"Decrease font",ted,SLOT(zoomOut()),QKeySequence("Ctrl+-"));
+toolbar->addAction(QIcon::fromTheme("zoom-out"),"Decrease font",ted,SLOT(zoomOut()));
+menu_view->addAction(QIcon::fromTheme("preferences-desktop-font"),"Font...",this,SLOT(fontselector()));
 
-// слот модификации
+// modification slot
 connect(ted,SIGNAL(textChanged()),this,SLOT(setChanged()));
 
 ted->setFocus();
@@ -129,26 +129,26 @@ ted->moveCursor(QTextCursor::Start,QTextCursor::MoveAnchor);
 }
 
 //***********************************************************
-//* Деструктор просмотрщика
+//* Viewer destructor
 //***********************************************************
 viewer::~viewer() {
 
 QMessageBox::StandardButton reply;
 QFont font;
 
-// сохраняем размер шрифта
+// save the font size
 font=ted->font();
 config->setValue("/config/EditorFont",font);
 
-// геометрия главного окна
+// main window geometry
 QRect rect=geometry();
 config->setValue("/config/EditorRect",rect);
 
-// признак изменения данных
+// data change indicator
 if (datachanged) {
-  reply=QMessageBox::warning(this,"Запись файла","Содержимое файла изменено, сохранить?",QMessageBox::Ok | QMessageBox::Cancel);
+  reply=QMessageBox::warning(this,"Write file","The file content has been changed, save?",QMessageBox::Ok | QMessageBox::Cancel);
   if (reply == QMessageBox::Ok) {
-    // сохранение данных
+    // saving data
     save_all();
   }
 }  
@@ -158,7 +158,7 @@ delete [] pdata;
 }
 
 //***********************************************************
-//* Сохранение данных в вектор файла
+//* Saving data to a file vector
 //***********************************************************
 void viewer::save_all() {
 
@@ -175,31 +175,31 @@ else {
   memcpy(sdata,(uint8_t*)xdata.data(),xdata.size());
   *slen=xdata.size();
 }  
-// вызываем сигнал- признак модификации
+// call the modification signal
 emit changed();
 
-// удаляем звездочку из заголовка
+// remove the asterisk from the title
 str=windowTitle();
 pos=str.indexOf('*');
 if (pos != -1) {
   str.truncate(pos-1);
   setWindowTitle(str);
 }  
-// восстанавливаем обработчик модификации
+// restore the modification handler
 datachanged=false;
 connect(ted,SIGNAL(textChanged()),this,SLOT(setChanged()));
 
 }
 
 //***********************************************************
-//* Поиск текста
+//* Text search
 //***********************************************************
 void viewer::find() {
 
 int res;  
   
 QInputDialog* pd=new QInputDialog(this);  
-pd->setLabelText("Поиск в файле:");
+pd->setLabelText("Search in file:");
 res=pd->exec();
 if (res == QDialog::Accepted) {
  findtext=pd->textValue();
@@ -209,7 +209,7 @@ delete pd;
 }
 
 //***********************************************************
-//* Продолжение поиска текста
+//* Continue text search
 //***********************************************************
 void viewer::findnext() {
 
@@ -218,12 +218,12 @@ int res;
 if (findtext.size() == 0) return;
   res=ted->find(findtext);
   if (!res) {
-    QMessageBox::information(0,"Информация","Текст не найден");
+    QMessageBox::information(0,"Information","Text not found");
   } 
 }  
 
 //***********************************************************
-//* Выбор шрифта
+//* Font selection
 //***********************************************************
 void viewer::fontselector() {
 
@@ -242,16 +242,16 @@ delete fss;
 
 
 //***********************************************************
-//* Вызов внешнего слота модификации
+//* Calling an external modification slot
 //***********************************************************
 void viewer::setChanged() { 
 
 QString str;
 
 datachanged=true;
-// рассоединяем сигнал - он нужен ровно один раз
+// disconnect the signal - it is needed only once
 disconnect(ted,SIGNAL(textChanged()),this,SLOT(setChanged()));
-// добавляем звездочку в заголовок
+// add an asterisk to the title
 str=windowTitle();
 str.append(" *");
 setWindowTitle(str);

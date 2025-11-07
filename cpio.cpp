@@ -1,5 +1,5 @@
 // 
-//  Редактор cpio-разделов
+//  cpio partition editor
 // 
 #include <QtCore/QVariant>
 #include <QtWidgets>
@@ -16,7 +16,7 @@
 #include "hexfileviewer.h"
 
 //*********************************************************************
-//* Конструктор класса редактора cpio
+//* cpio editor class constructor
 //*********************************************************************
 cpioedit::cpioedit (int xpnum,QMenuBar* mbar, QWidget* parent) : QWidget(parent) {
 
@@ -25,63 +25,63 @@ char filename[512];
 
 menubar=mbar;  
 pnum=xpnum;
-// образ раздела
+// partition image
 pdata=ptable->iptr(pnum);
 plen=ptable->psize(pnum);
 
-// компоновщик окна
+// window layout
 vlm=new QVBoxLayout(this);
 
-// тулбар
-toolbar=new QToolBar("Файловые операции",this);
+// toolbar
+toolbar=new QToolBar("File operations",this);
 vlm->addWidget(toolbar);
 
-// меню редактора
-menu_edit = new QMenu("CPIO-Редактор",menubar);
+// editor menu
+menu_edit = new QMenu("CPIO-Editor",menubar);
 menubar->addAction(menu_edit->menuAction());
 
-// Пункты меню редактора
-menu_edit->addAction(QIcon::fromTheme("go-up"),"Перейти на уровень выше",this,SLOT(go_up()),QKeySequence("Backspace"));
-menu_edit->addAction(QIcon::fromTheme("document-save"),"Извлечь файл",this,SLOT(extract_file()),QKeySequence("F11"));
-menu_edit->addAction(QIcon::fromTheme("object-flip-vertical"),"Заменить файл",this,SLOT(replace_file()),0);
-menu_edit->addAction(QIcon::fromTheme("edit-delete"),"Удалить файл",this,SLOT(delete_file()),QKeySequence("Del"));
-menu_edit->addAction(QIcon(":/icon_hex.png"),"HEX-просмотр/редактор",this,SLOT(hexedit_file()),QKeySequence("F2"));
-menu_edit->addAction(QIcon(":/icon_view.png"),"Текстовый просмотр",this,SLOT(view_file()),QKeySequence("F3"));
-menu_edit->addAction(QIcon(":/icon_edit.png"),"Текстовый редактор",this,SLOT(edit_file()),QKeySequence("F4"));
-menu_edit->addAction(QIcon::fromTheme("list-add"),"Добавить новый файл",this,SLOT(add_file()),QKeySequence("+"));
-menu_edit->addAction(QIcon::fromTheme("folder-new"),"Создать каталог",this,SLOT(add_dir()),QKeySequence("F7"));
+// Editor menu items
+menu_edit->addAction(QIcon::fromTheme("go-up"),"Go up one level",this,SLOT(go_up()),QKeySequence("Backspace"));
+menu_edit->addAction(QIcon::fromTheme("document-save"),"Extract file",this,SLOT(extract_file()),QKeySequence("F11"));
+menu_edit->addAction(QIcon::fromTheme("object-flip-vertical"),"Replace file",this,SLOT(replace_file()),0);
+menu_edit->addAction(QIcon::fromTheme("edit-delete"),"Delete file",this,SLOT(delete_file()),QKeySequence("Del"));
+menu_edit->addAction(QIcon(":/icon_hex.png"),"HEX-viewer/editor",this,SLOT(hexedit_file()),QKeySequence("F2"));
+menu_edit->addAction(QIcon(":/icon_view.png"),"Text view",this,SLOT(view_file()),QKeySequence("F3"));
+menu_edit->addAction(QIcon(":/icon_edit.png"),"Text editor",this,SLOT(edit_file()),QKeySequence("F4"));
+menu_edit->addAction(QIcon::fromTheme("list-add"),"Add new file",this,SLOT(add_file()),QKeySequence("+"));
+menu_edit->addAction(QIcon::fromTheme("folder-new"),"Create directory",this,SLOT(add_dir()),QKeySequence("F7"));
 
 menu_edit->addSeparator();
-menu_edit->addAction(QIcon::fromTheme("file-save"),"Сохранить изменения",this,SLOT(saveall()),QKeySequence("Ctrl+W"));
+menu_edit->addAction(QIcon::fromTheme("file-save"),"Save changes",this,SLOT(saveall()),QKeySequence("Ctrl+W"));
 
-// Пункты тулбара
-toolbar->addAction(QIcon::fromTheme("go-up"),"Перейти на уровень выше",this,SLOT(go_up()));
-toolbar->addAction(QIcon::fromTheme("document-save"),"Извлечь файл",this,SLOT(extract_file()));
-toolbar->addAction(QIcon::fromTheme("object-flip-vertical"),"Заменить файл",this,SLOT(replace_file()));
-toolbar->addAction(QIcon::fromTheme("edit-delete"),"Удалить файл",this,SLOT(delete_file()));
-toolbar->addAction(QIcon(":/icon_hex.png"),"HEX-просмотр/редактор",this,SLOT(hexedit_file()));
-toolbar->addAction(QIcon(":/icon_view.png"),"Текстовый просмотр",this,SLOT(view_file()));
-toolbar->addAction(QIcon(":/icon_edit.png"),"Текстовый редактор",this,SLOT(edit_file()));
+// Toolbar items
+toolbar->addAction(QIcon::fromTheme("go-up"),"Go up one level",this,SLOT(go_up()));
+toolbar->addAction(QIcon::fromTheme("document-save"),"Extract file",this,SLOT(extract_file()));
+toolbar->addAction(QIcon::fromTheme("object-flip-vertical"),"Replace file",this,SLOT(replace_file()));
+toolbar->addAction(QIcon::fromTheme("edit-delete"),"Delete file",this,SLOT(delete_file()));
+toolbar->addAction(QIcon(":/icon_hex.png"),"HEX-viewer/editor",this,SLOT(hexedit_file()));
+toolbar->addAction(QIcon(":/icon_view.png"),"Text view",this,SLOT(view_file()));
+toolbar->addAction(QIcon(":/icon_edit.png"),"Text editor",this,SLOT(edit_file()));
 toolbar->addSeparator();
-toolbar->addAction(QIcon::fromTheme("list-add"),"Добавить новый файл",this,SLOT(add_file()));
-toolbar->addAction(QIcon::fromTheme("folder-new"),"Создать каталог",this,SLOT(add_dir()));
+toolbar->addAction(QIcon::fromTheme("list-add"),"Add new file",this,SLOT(add_file()));
+toolbar->addAction(QIcon::fromTheme("folder-new"),"Create directory",this,SLOT(add_dir()));
 toolbar->setEnabled(false);
-// закрываем доступ к меню
+// close access to the menu
 menu_edit->setEnabled(false);
 
-// загружаем весь cpio в списки
-uint8_t* iptr=pdata;  // указатель на текущую позицию в образе раздела
+// load all cpio into lists
+uint8_t* iptr=pdata;  // pointer to the current position in the partition image
 rootdir=new QList<cpfiledir*>;
-// Цикл разбора cpio-потока
+// cpio stream parsing cycle
 while(iptr < (pdata+plen)) {
-  // Ищем сигнатуру заголовка очередного файла
+  // Search for the header signature of the next file
   while(1) {
    if (iptr >= (pdata+plen)) {
-     QMessageBox::critical(0,"Ошибка CPIO","Не обнаружен ограничитель потока TRAILER!!!");
+     QMessageBox::critical(0,"CPIO Error","TRAILER!!! stream delimiter not found");
      goto ldone;
    }  
-   if (is_cpio(iptr)) break; // нашли сигнатуру
-   iptr++; // ищем ее дальше
+   if (is_cpio(iptr)) break; // found signature
+   iptr++; // look for it further
   }  
  extract_filename(iptr,filename);
  if (strncmp(filename,"TRAILER!!!",10) == 0) break;
@@ -90,49 +90,49 @@ while(iptr < (pdata+plen)) {
  iptr+=res;
 }
 ldone:
-// выводим корневой каталог
+// display the root directory
 cpio_show_dir(rootdir,0);
 
 }
 
 //*********************************************************************
-//* Деструктор класса cpio
+//* cpio class destructor
 //*********************************************************************
 cpioedit::~cpioedit () {
 
 QMessageBox::StandardButton reply;
 
-// Проверяем, не изменлось ли что-нибудь внутри  
+// Check if anything has changed inside  
 if (is_modified) {
-  reply=QMessageBox::warning(this,"Запись раздела","Содержимое раздела изменено, сохранить?",QMessageBox::Ok | QMessageBox::Cancel);
+  reply=QMessageBox::warning(this,"Write partition","The content of the partition has been changed, save?",QMessageBox::Ok | QMessageBox::Cancel);
   if (reply == QMessageBox::Ok) repack_cpio();
 }  
-// удаляем элементы корневого каталога
+// delete root directory elements
 qDeleteAll(*rootdir);
-// очищаем корневой каталог
+// clear the root directory
 rootdir->clear();  
-// удаляем корневой каталог
+// delete the root directory
 delete rootdir;
 
-// уничтожаем меню
+// destroy the menu
 delete menu_edit;
 
 }
 
 
 //*********************************************************************
-//* Открытие тулбара и меню
+//* Opening the toolbar and menu
 //*********************************************************************
 void cpioedit::menuenabler() {
   
 toolbar->setEnabled(true);
 menu_edit->setEnabled(true);
-// разъединяем этот слот - он уже отработал и далее не нужен
+// disconnect this slot - it has already worked and is no longer needed
 disconnect(cpiotable,0,this,SLOT(menuenabler()));
 }
 
 //*********************************************************************
-//* Сохранение изменений
+//* Saving changes
 //*********************************************************************
 void cpioedit::saveall() {
   
@@ -141,9 +141,9 @@ is_modified=false;
 }
 
 //*************************************************************
-//*  Формирование списка файлов
+//*  Formation of the list of files
 //*
-//* focusmode - разрешает установку фокуса на окно просмотра
+//* focusmode - allows setting focus on the view window
 //*************************************************************
 void cpioedit::cpio_show_dir(QList<cpfiledir*>* dir, int focusmode) {
 
@@ -169,41 +169,41 @@ currentdir=dir;
 cpiotable->setRowCount(dir->count()); //cpiotable->rowCount()+1);
 for (i=0;i<dir->count();i++) {
   hlist <<""; 
-  // индекс файла в векторе
+  // file index in the vector
   str.sprintf("%i",i);
   item=new QTableWidgetItem(str);
   item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
   item->setForeground(QBrush(Qt::black));
   cpiotable->setItem(i,0,item);
   
-  // имя файла
+  // file name
   str=dir->at(i)->cfname();
   item=new QTableWidgetItem(str);
-  // Выбор иконки файла
+  // Select file icon
   showsize=0;
   if (i == 0) item->setIcon(QIcon(QApplication::style()->standardIcon(QStyle::SP_ArrowBack))); 
   else if (dir->at(i)->subdir != 0) item->setIcon(QIcon(QApplication::style()->standardIcon(QStyle::SP_DirIcon))); 
   else if (((dir->at(i)->fmode())&C_ISLNK) == C_ISLNK) {
-    // симлмнк
+    // symlink
     item->setIcon(QIcon(QApplication::style()->standardIcon(QStyle::SP_FileLinkIcon)));
-    // добавляем к имени симлинка ссылку на имя файла
+    // add a link to the file name to the symlink name
     str.append(" -> ");
     str.append(dir->at(i)->fdata()); 
     item->setText(str);
   }  
   else  {
-    // выполняемые файлы
+    // executable files
     if ((((dir->at(i)->fmode())&C_IXUSR) != 0)) item->setIcon(QIcon(QApplication::style()->standardIcon(QStyle::SP_ComputerIcon)));
-    // невыполняемые файлы
+    // non-executable files
     else item->setIcon(QIcon(QApplication::style()->standardIcon(QStyle::SP_FileIcon)));
-    // разрешить показ размера
+    // allow to show size
     showsize=1;
   }  
   item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsUserCheckable|Qt::ItemIsEnabled);
   cpiotable->setItem(i,1,item);
   if (i == 0) continue;
 
-  // размер файла
+  // file size
   if (showsize) {
    str.sprintf("%i",dir->at(i)->fsize());
    item=new QTableWidgetItem(str);
@@ -212,7 +212,7 @@ for (i=0;i<dir->count();i++) {
    cpiotable->setItem(i,2,item);
   } 
   
-  // дата-время
+  // date-time
   ctime=dir->at(i)->ftime();
   strftime(tstr,100,"%d-%b-%y  %H:%M",localtime(&ctime));
   str=tstr;
@@ -221,7 +221,7 @@ for (i=0;i<dir->count();i++) {
   item->setForeground(QBrush(Qt::black));
   cpiotable->setItem(i,3,item);
   
-  // атрибуты доступа
+  // access attributes
   fm=dir->at(i)->fmode();
   strcpy(modestr,"rwxrwxrwx");
   for (j=0;j<9;j++) {
@@ -252,10 +252,10 @@ for (i=0;i<dir->count();i++) {
 //   cpiotable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
   
-  // прячем индексы файлов
+  // hide file indexes
   cpiotable->setColumnHidden(0,true);
   
-  // прячем вертикальные заголовки
+  // hide vertical headers
   cpiotable->setVerticalHeaderLabels(hlist);
 
   
@@ -266,21 +266,21 @@ for (i=0;i<dir->count();i++) {
 
   cpiotable->sortByColumn(1,Qt::AscendingOrder);
   
-  // Сигнал выбора файла (enter или двойной клик)
+  // File selection signal (enter or double click)
   connect(cpiotable,SIGNAL(cellActivated(int,int)),SLOT(cpio_process_file(int,int)));
 //   connect(cpiotable,SIGNAL(cellDoubleClicked(int,int)),SLOT(cpio_process_file(int,int)));
 //   connect(cpiotable,SIGNAL(cellPressed(int,int)),SLOT(cpio_process_file(int,int)));
   
-  // Вводим таблицу в экранную форму
+  // Enter the table into the screen form
   vlm->addWidget(cpiotable);
   cpiotable->show();
   cpiotable->setCurrentCell(0,0);
   if (focusmode) {
-    // Таблица получает фокус - меню можно открывать
+    // The table gets the focus - the menu can be opened
     cpiotable->setFocus();
     menuenabler();
   }
-  // Таблица не получает фокус - устанавливаем ловушку
+  // The table does not get focus - set a trap
   else {
     connect(cpiotable,SIGNAL(cellActivated(int,int)),this,SLOT(menuenabler()));
     connect(cpiotable,SIGNAL(cellClicked(int,int)),this,SLOT(menuenabler()));
@@ -289,7 +289,7 @@ for (i=0;i<dir->count();i++) {
 }
 
 //*********************************************************************
-//* Уничтожение таблицы файлов
+//* Destruction of the file table
 //*********************************************************************
 void cpioedit::cpio_hide_dir() {
 
@@ -302,7 +302,7 @@ cpiotable=0;
 }
 
 //*********************************************************************
-//* Получение индекса текущего файла в векторе каталога
+//* Getting the index of the current file in the directory vector
 //*********************************************************************
 int cpioedit::current_file_index() {
 
@@ -317,7 +317,7 @@ return idx;
 }
 
 //*********************************************************************
-//* Получение ссылки на описатель текущего файла
+//* Getting a link to the descriptor of the current file
 //*********************************************************************
 cpfiledir* cpioedit::selected_file() {
 
@@ -325,17 +325,17 @@ return currentdir->at(current_file_index());
 }
 
 //*********************************************************************
-//* Удаление файла
+//* Deleting a file
 //*********************************************************************
 void cpioedit::delete_file() {
   
 int idx;
 int row=cpiotable->currentRow();
 
-idx=current_file_index(); // позиция файла в векторе
-delete selected_file();   // удаляем описатель файла
-currentdir->removeAt(idx); // сносим файл из списка
-// перерисовываем таблицу
+idx=current_file_index(); // file position in the vector
+delete selected_file();   // delete file descriptor
+currentdir->removeAt(idx); // remove the file from the list
+// redraw the table
 cpio_hide_dir();
 cpio_show_dir(currentdir,true);
 cpiotable->setCurrentCell(row,0);
@@ -343,7 +343,7 @@ cpiotable->setCurrentCell(row,0);
 
 
 //*********************************************************************
-//* извлечение файла
+//* file extraction
 //*********************************************************************
 void cpioedit::extract_file() {
 
@@ -353,14 +353,14 @@ cpfiledir* fd;
 fd=selected_file();
 
 if (((fd->fmode()) & C_ISREG) == 0) {
-  // нерегулярный файл - его извлекать нельзя
-  QMessageBox::critical(0,"Ошибка","Нерегулярные файлы извлекать нельзя");  
+  // irregular file - it cannot be extracted
+  QMessageBox::critical(0,"Error","Irregular files cannot be extracted");  
   return;
 }
 
 QString fn=fd->cfname();
 
-fn=QFileDialog::getSaveFileName(this,"Сохранение файла",fn,"All files (*.*)");
+fn=QFileDialog::getSaveFileName(this,"Saving file",fn,"All files (*.*)");
 if (fn.isEmpty()) return;
 out=fopen(fn.toLocal8Bit().data(),"w");
 fwrite(fd->fdata(),1,fd->fsize(),out);
@@ -368,7 +368,7 @@ fclose(out);
 }
 
 //*********************************************************************
-//* замена файла
+//* file replacement
 //*********************************************************************
 void cpioedit::replace_file() {
 
@@ -379,21 +379,21 @@ uint32_t fsize;
 fd=selected_file();
 
 if (((fd->fmode()) & C_ISREG) == 0) {
-  // нерегулярный файл - его извлекать нельзя
-  QMessageBox::critical(0,"Ошибка","Нерегулярные файлы заменять нельзя");  
+  // irregular file - it cannot be extracted
+  QMessageBox::critical(0,"Error","Irregular files cannot be replaced");  
   return;
 }
 
-fn=QFileDialog::getOpenFileName(this,"Замена файла",fn,"All files (*.*)");
+fn=QFileDialog::getOpenFileName(this,"Replacing a file",fn,"All files (*.*)");
 if (fn.isEmpty()) return;
 
 QFile in(fn,this);
 if (!in.open(QIODevice::ReadOnly)) {
-    QMessageBox::critical(0,"Ошибка","Ошибка чтения файла");
+    QMessageBox::critical(0,"Error","File read error");
     return;
 }
 fsize=in.size();
-uint8_t* fbuf=new uint8_t[fsize]; // файловый буфер
+uint8_t* fbuf=new uint8_t[fsize]; // file buffer
 in.read((char*)fbuf,fsize);
 in.close();
 fd->replace_data(fbuf,fsize);
@@ -401,7 +401,7 @@ delete [] fbuf;
 }
 
 //*********************************************************************
-//* Вызов файлового редактора
+//* Calling the file editor
 //*********************************************************************
 void cpioedit::fileeditor(bool readonly) {
 
@@ -410,25 +410,25 @@ cpfiledir* fd;
 fd=selected_file();
 
 if (((fd->fmode()) & C_ISREG) == 0) {
-  // нерегулярный файл - его извлекать нельзя
-  QMessageBox::critical(0,"Ошибка","Нерегулярные файлы просматривать/редактировать нельзя");  
+  // irregular file - it cannot be extracted
+  QMessageBox::critical(0,"Error","Irregular files cannot be viewed/edited");  
   return;
 }
 
 view=new viewer(0,0,readonly,fd->fname(),fd);  
-// сигнал модификации
+// modification signal
 connect(view,SIGNAL(changed()),this,SLOT(setModified()));
 
 }  
 
 //*********************************************************************
-//* текстовый редактор
+//* text editor
 //*********************************************************************
 void cpioedit::view_file() { fileeditor(true); }
 void cpioedit::edit_file() { fileeditor(false); }
 
 //*********************************************************************
-//* Вызов hex-редактора
+//* Calling the hex editor
 //*********************************************************************
 void cpioedit::hexedit_file() {
 
@@ -437,19 +437,19 @@ cpfiledir* fd;
 fd=selected_file();
 
 if (((fd->fmode()) & C_ISREG) == 0) {
-  // нерегулярный файл - его извлекать нельзя
-  QMessageBox::critical(0,"Ошибка","Нерегулярные файлы просматривать/редактировать нельзя");  
+  // irregular file - it cannot be extracted
+  QMessageBox::critical(0,"Error","Irregular files cannot be viewed/edited");  
   return;
 }
 
 hview=new hexfileviewer(fd);  
 
-// сигнал модификации
+// modification signal
 connect(hview,SIGNAL(changed()),this,SLOT(setModified()));
 }  
 
 //*********************************************************************
-//* Переход на уровень вверх
+//* Go up one level
 //*********************************************************************
 void cpioedit::go_up() {
   
@@ -458,26 +458,26 @@ emit cpio_process_file(0,0);
 
 
 //*********************************************************************
-//* Приемник сигнала выбора файла/каталога
+//* Receiver of the file/directory selection signal
 //*********************************************************************
 void cpioedit::cpio_process_file(int row, int col) {
 
 QList<cpfiledir*>* subdir;
 if (row<0) return;
 
-if (row != 0) subdir=selected_file()->subdir; // какой-то из подкаталогов
-else subdir=currentdir->at(0)->subdir; // каталог верхнего уровня
+if (row != 0) subdir=selected_file()->subdir; // one of the subdirectories
+else subdir=currentdir->at(0)->subdir; // upper level directory
 
-if (subdir == 0) return; // выбранный файл - не каталог
-if (cpiotable != 0) { // не корневой каталог
-  disconnect(cpiotable,0,this,0); // разъединяем все слоты
+if (subdir == 0) return; // selected file is not a directory
+if (cpiotable != 0) { // not the root directory
+  disconnect(cpiotable,0,this,0); // disconnect all slots
   cpio_hide_dir();
   cpio_show_dir(subdir,1);
 }  
 }
 
 //*********************************************************************
-//* Перепаковка cpio-раздела обратно
+//* Repacking the cpio partition back
 //*********************************************************************
 void cpioedit::repack_cpio() {
   
@@ -489,7 +489,7 @@ for(i=0;i<rootdir->count(); i++) {
   nlen+=rootdir->at(i)->store_cpio(ndata+nlen);
 }
 
-// хвост cpio-файла
+// cpio file tail
 bzero(ndata+nlen,128);
 strcpy((char*)(ndata+nlen),"07070100000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000B00000000TRAILER!!!");
 nlen+=128;
@@ -500,7 +500,7 @@ plen=nlen;
 }
 
 //*********************************************************************
-//* Добавление нового файла
+//* Adding a new file
 //*********************************************************************
 void cpioedit::add_file() {
 
@@ -511,31 +511,31 @@ uint8_t* fbuf=0;
 uint8_t filename[100];
 char str[10];
 
-// эмуляция заголовка cpio
+// cpio header emulation
 cpio_header_t hdr;    
-// заполняем константы заголовка
+// fill in the header constants
 memset(&hdr,'0',sizeof(hdr));
 memcpy(hdr.c_magic,"070701",6);
 memcpy(hdr.c_mode,"000081B4",8);
 
-fn=QFileDialog::getOpenFileName(this,"Добавление нового файла",fn,"All files (*.*)");
+fn=QFileDialog::getOpenFileName(this,"Adding a new file",fn,"All files (*.*)");
 if (fn.isEmpty()) return;
 
 QFile in(fn,this);
 if (!in.open(QIODevice::ReadOnly)) {
-    QMessageBox::critical(0,"Ошибка","Ошибка чтения файла");
+    QMessageBox::critical(0,"Error","File read error");
     return;
 }
 fsize=in.size();
 if (fsize != 0) {
-  fbuf=new uint8_t[fsize]; // файловый буфер
-  // читаем весь файл в буфер
+  fbuf=new uint8_t[fsize]; // file buffer
+  // read the entire file into the buffer
   in.read((char*)fbuf,fsize);
 }
 
-// Получаем информацию о файле
+// Get file information
 QFileInfo fi=QFileInfo(in);
-// дата-время
+// date-time
 sprintf(str,"%08x",fi.created().toSecsSinceEpoch()&0xffffffff);
 memcpy(hdr.c_mtime,str,8);
 // gid
@@ -544,30 +544,30 @@ memcpy(hdr.c_gid,str,8);
 // uid
 sprintf(str,"%08x",fi.ownerId());
 memcpy(hdr.c_uid,str,8);
-// атрибуты
+// attributes
 uint32_t attr=fi.permissions()&0xfff;
-attr=(attr&7) | ((attr&0xf0)>>1) | ((attr&0xf00)>>2); // преобразуем из формата QT в нормальный юниксовый
-attr|=0x8000;  // поднимаем флаг регулярного файла  //81b4  1000 000 110 110 100   6644  110 0110 0100 0100
+attr=(attr&7) | ((attr&0xf0)>>1) | ((attr&0xf00)>>2); // convert from QT format to normal unix
+attr|=0x8000;  // raise the regular file flag  //81b4  1000 000 110 110 100   6644  110 0110 0100 0100
 //printf("\n attr = %08x\n",fi.permissions());
 sprintf(str,"%08x",attr);
 memcpy(hdr.c_mode,str,8);
-// имя файла
+// file name
 fn=fi.fileName();
-sprintf(str,"%08x",fn.size()+1); // длина имени файла
+sprintf(str,"%08x",fn.size()+1); // file name length
 memcpy(hdr.c_namesize,str,8);
-memcpy(filename,fn.toLocal8Bit().data(),fn.size()+1); // имя файла
-// размер файла
+memcpy(filename,fn.toLocal8Bit().data(),fn.size()+1); // file name
+// file size
 sprintf(str,"%08x",fsize); 
 memcpy(hdr.c_filesize,str,8);
 
-// файл больше не нужен
+// file is no longer needed
 in.close();
 
-// создаем новую запись о файле
+// create a new file record
 fd=new cpfiledir(&hdr, filename, fbuf);
 if (fbuf != 0) delete [] fbuf;
 
-// добавляем файл в текущий каталог
+// add the file to the current directory
 currentdir->append(fd);
 cpio_hide_dir();
 cpio_show_dir(currentdir,true);
@@ -575,7 +575,7 @@ cpio_show_dir(currentdir,true);
 }
 
 //*********************************************************************
-//* Создание каталога
+//* Creating a directory
 //*********************************************************************
 void cpioedit::add_dir() {
 
@@ -585,42 +585,42 @@ char str[10];
 
 int res;
 
-// эмуляция заголовка cpio
+// cpio header emulation
 cpio_header_t hdr;    
-// заполняем константы заголовка
+// fill in the header constants
 memset(&hdr,'0',sizeof(hdr));
 memcpy(hdr.c_magic,"070701",6);
 memcpy(hdr.c_mode,"000041ED",8);
 
 QInputDialog* pd=new QInputDialog(this);  
-pd->setLabelText("Имя каталога:");
+pd->setLabelText("Directory name:");
 res=pd->exec();
 
 if (res == QDialog::Accepted) {
- // ответ получен - создаем каталог   
- strcpy(dirname,pd->textValue().toLocal8Bit().data());  // имя каталога 
- // дата-время
+ // answer received - create a directory   
+ strcpy(dirname,pd->textValue().toLocal8Bit().data());  // directory name 
+ // date-time
  sprintf(str,"%08x",time(0));
  memcpy(hdr.c_mtime,str,8);
- // длина имени каталога
+ // directory name length
  sprintf(str,"%08x",strlen(dirname)+1);
  memcpy(hdr.c_namesize,str,8);
 
- // создаем новую запись о файле
+ // create a new file record
  fd=new cpfiledir(&hdr, dirname, 0);
 
-  // вектор подкаталога
+  // subdirectory vector
  fd->subdir=new QList<cpfiledir*>;
- // указатель на каталог верхнего уровня (то есть вот этот)
+ // pointer to the upper-level directory (i.e. this one)
  cpfiledir* upfd=new cpfiledir(&hdr," ",0);
  upfd->subdir=currentdir;
- // имя файла для него - ".."
+ // file name for it is ".."
  upfd->setfname("..");
- upfd->updirflag=true;  // признак ссылки на каталог верхнего уровня
- // добавляем эту запись первой в вектор подкаталога
+ upfd->updirflag=true;  // sign of a link to the upper level directory
+ // add this entry first to the subdirectory vector
  fd->subdir->append(upfd);
 
-// добавляем файл в текущий каталог
+// add the file to the current directory
  currentdir->append(fd);
  cpio_hide_dir();
  cpio_show_dir(currentdir,true);
